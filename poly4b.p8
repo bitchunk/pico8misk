@@ -461,10 +461,18 @@ vdist=4
 kmap=htbl[[{-1 0} {1 0} {0 -1} {0 1}]]
 wasd=htbl[[a d w s]]
 view=mkrect[[64 64 128 128]]
-cam=mkrect[[64 64 128 128]]
+--cam=mkrect[[64 64 128 128]]
 rview=mkrect[[0 0 128 128]]
-view.z=0
-cam.z=64
+opos=mkrect[[0 0 0 0]]
+orot=mkrect[[0 0 0 0]]
+view.z=64
+
+genab=htbl[[x=true;y=true;z=true;]]
+gedef=htbl[[x=true;y=true;z=true;]]
+
+--cam.z=64
+opos.z=0
+orot.z=0
 rview.z=64
 --cat(view,htbl[[r{x=0;y=0;z=0;}]])
 ldps=3
@@ -486,13 +494,24 @@ def_d=function(o)
 cls(5)
 local p=0
 
---local q=radq(0.2,{rview.y/100,rview.x/100,-rview.z/100})
-v=tablefill(15,4,4,4)
+v=tablefill(15,3,3,3)
 
-drawo(v,0,0,0)
+drawo(v,opos.x,opos.y,opos.z)
 
-spr(0,mo.x,mo.y)
-circfill(64,64,1,7)
+rectfill(64,64,64,64,7)
+spr(keystate[' '] and 1 or 0,mo.x,mo.y)
+
+local qx,qy,qz=vradq(rview,1/128)
+local q,x,y,z=rots(128,0,0,qx,qy,qz)
+fillp(not keystate['x'] and 0xcc33.8)
+line(view.x,view.y,x+view.x,y+view.y,8)
+local q,x,y,z=rots(0,128,0,qx,qy,qz)
+fillp(not keystate['c'] and 0xcc33.8)
+line(view.x,view.y,x+view.x,y+view.y,11)
+local q,x,y,z=rots(0,0,128,qx,qy,qz)
+fillp(not keystate['z'] and 0xcc33.8)
+line(view.x,view.y,x+view.x,y+view.y,12)
+fillp()
 end
 ,def_k=function(o)
 local b
@@ -503,21 +522,50 @@ view.y-=kmap[i][2]
 end
 end)
 
-if mo.l then
-dragstart(view)
-local x,y=dragdist(0,0,view)
-view.ud(-x,-y)
+cat(genab,gedef)
+if keystate['x'] or keystate['c'] or keystate['z'] then
+genab.x=keystate['x']
+genab.y=keystate['c']
+genab.z=keystate['z']
 end
+
+if mo.l then
+dragstart(opos)
+dragstart(view)
+if keystate[' '] then
+local x,y=dragdist(view,{x=0,y=0,z=0,})
+view.ud(x,y)
+else
+scale=8
+local x,y,z=dragdist(opos,rview)
+opos.ud(genab.x and flr(x),genab.y and flr(y))
+opos.z=genab.z and flr(z) or opos.z
+scale=1
+end
+end
+
 if mo.r then
 dragstart(rview)
-local x,y=dragdist(0,0,rview)
-rview.ud(inrng(-x,256,-256) and -x or toc(x,abs(x))*256
-,inrng(-y,256,-256) and -y or toc(y,abs(y))*256)
+dragstart(orot)
+if keystate[' '] then
+local x,y=dragdist(rview,{x=0,y=0,z=0})
+rview.ud(inrng(-x,256,-256) and x or toc(x,abs(x))*256
+,inrng(-y,256,-256) and y or toc(y,abs(y))*256)
+else
+scale=8
+--local x,y,z=dragdist(orot,rview)
+--orot.ud(x,y)
+--orot.z=z
 
---rview.x=(-x*0.05)%1
---rview.y=(-y*0.05)%1
+scale=1
 end
-view.z+=mo.w*2
+end
+
+if keystate[' '] then
+rview.z-=mo.w*2
+else
+view.z-=mo.w*2
+end
 end
 }
 
@@ -549,7 +597,7 @@ end)
 isdebug=true
 dbg(join({view.x,view.y,view.z},' '))
 dbg(join({rview.x,rview.y,rview.z},' '))
-dbg(stat(2))
+dbg(stat(1))
 dbg_print()
 end
 
@@ -590,11 +638,7 @@ mst[k]=0
 end
 mo[k..'t']=mst[k]==1
 end)
---mo.mt=mst.m==1
---mo.rt=mst.r==1
---mo.lt=mst.l==1
 
---if mo.lt or mo.rt then
 if ambtn() then
 mst.stx,mst.sty=mo.x,mo.y
 
@@ -609,51 +653,103 @@ end
 
 function dragstart(vw)
 if ambtn() then
-vw.stx,vw.sty=vw.x,vw.y
+vw.stx,vw.sty,vw.stz=vw.x,vw.y,vw.z
 end
 end
 
-function dragdist(x,y,vw)
-return (mo.x-mo.sx)/scale+(x or vw.x)-vw.stx,(mo.y-mo.sy)/scale+(y or vw.y)-vw.sty
---return view.stx-view.x+(x or 0)+(mo.x-mo.sx)/scale,view.sty-view.y+(y or 0)+(mo.y-mo.sy)/scale
+function dragdist(vw,rv)
+
+local qx,qy,qz=vradq({x=rv.x,y=rv.y,z=rv.z},1/128)
+
+--local x,y=mo.x-mo.sx,mo.y-mo.sy
+--vdmp({x,y,z,vradq({x=x,y=y,z=0},1)})
+local x,y=mo.x-mo.sx,mo.y-mo.sy
+local q,x,y,z=rots(x,y,0,qx,qy,qz)
+return
+ x/scale+vw.stx
+,y/scale+vw.sty
+,-z/scale+vw.stz
+--,(mo.z-mo.sz)/scale+vw.stz
+-- (mo.x-mo.sx)/scale+(x or vw.x)+vw.stx
+--,(mo.y-mo.sy)/scale+vw.sty+(y or vw.y)
+--,(mo.z-mo.sz)/scale+vw.stz+(z or vw.z)
+--,(mo.z-mo.sz)/scale+vw.stz+(z or vw.z)
+--return (mo.x-mo.sx)/scale+(x or vw.x)+vw.stx,(mo.y-mo.sy)/scale+vw.sty+(y or vw.y)
+--return (mo.x-mo.sx)/scale+(x or vw.x)-vw.stx,(mo.y-mo.sy)/scale+(y or vw.y)-vw.sty
 end
 
 btnstat={}
 function statkeys()
-tmap(wasd,function(v,i)
-btnstat[i-1]=false
-end)
+local k={}
+local i=0
 while stat(30) do
-local d=stat(31)
-tmap(wasd,function(v,i)
-btnstat[i-1]=v==d
-end)
+k[stat(31)]=true
+i+=1
 end
+--if i>1 then
+--cls()
+--tmap(k,function(v,i)
+--?i
+--end)
+--stop()
+--end
+dbg(i)
+return k
+--tmap(wasd,function(v,i)
+--btnstat[i-1]=false
+--end)
+--stop()
+--while stat(30) do
+--local d=stat(31)
+--tmap(wasd,function(v,i)
+--btnstat[i-1]=v==d
+--end)
+--end
 end
 
 function updatekey()
-presskey=stat(31)
+--presskey=stat(31)
+btnstat=statkeys()
+dbg(#btnstat)
+tmap(cat(presskey,btnstat),function(v,i)
+--dbg(i)
+panholdck(i)
+end)
 end
 function getkey()
 return presskey
 end
 
 presskey=''
+presskey={}
 panhold=0
+panhold={}
+keystate={}
 
-function panholdck()
---if panhold>0 then
---panhold+=1
+function panholdck(k)
+k=k or ''
+panhold[k]=panhold[k] or 0
+panhold[k]+=min(1,panhold[k])
+if btnstat[k] then
+ keystate[k]=true
+ panhold[k]=panhold[k]>1 and 28 or 1
+elseif panhold[k]>31 then
+ keystate[k]=false
+ panhold[k]=0
+end
+--dbg(panhold[k])
+end
+--function panholdck(k)
+--k=k or ''
+--panhold+=min(1,panhold)
+--if presskey==k then
+-- keystate=presskey
+-- panhold=panhold>1 and 28 or 1
+--elseif panhold>31 then
+-- keystate=''
+-- panhold=0
 --end
-panhold+=min(1,panhold)
-if presskey~='' then
- keystate=presskey
- panhold=panhold>1 and 29 or 1
-elseif panhold>31 then
- keystate=''
- panhold=0
-end
-end
+--end
 -->8
 --quaternion
 function radq(r,v)
@@ -676,7 +772,6 @@ end
 
 function drawo(o,x,y,z)
 local v={}
---local q=radq(0.2,{rview.z/64,rview.x/64,rview.y/64})
 tmap(o,function(o,oz)
 tmap(o,function(o,oy)
 tmap(o,function(o,ox)
@@ -685,44 +780,51 @@ end)
 end)
 end)
 
-local qx=radq(rview.x/100,{0,1,0})
-local qy=radq(rview.y/100,{1,0,0})
-local v,s=rolzsort({qx,qy},v)
+local qx,qy,qz=vradq(rview,1/128)
+
+local v,s=rolzsort({qx,qy,qz},v)
 tmap(v,function(p,i)
---vdmp(s)
---tmap(s,function(s,i)
---vdmp(#v/i/4)
 p[5]=pspal[p[5]][min(ceil((3.2-#v/i)),3)]
 drawp(spread(p))
---drawp(spread(cat(v,{pspal[v[5]][min(ceil(#v/i),4)]})))
 end)
 end
 
 function drawp(q,x,y,z,p)
 
---vdmp({q,x,y,z,p})
---local r=rolq(rolq({0,x,y,z},q[1]),q[2])
---local q,vx,vy,vz=spread(r)
-x=x*cam.z/view.z
-y=y*cam.z/view.z
-circfill(x*8+view.x,y*8+view.y,4,p)
---circfill(x*8+view.x,y*8+view.y,4,pspal[p][min(ceil((x-y+z)/2),3)])
---circfill(x*8+view.x,y*8+view.y,1,pspal[p][z])
+--x=x*view.z/rview.z
+--y=y*view.z/rview.z
+
+x=x*rview.z/view.z
+y=y*rview.z/view.z
+--circfill(x*8+view.x,y*8+view.y,4,p)
+circfill(x*8+view.x,y*8+view.y,1,p)
 end
 
 function rolzsort(q,v)
 local s={}
 tmap(v,function(v)
 local a,x,y,z,p=spread(v)
+--local q,vx,vy,vz=spread(rolq(rolq(rolq({0,x,y,z},q[1]),q[2]),q[3]))
 local q,vx,vy,vz=spread(rolq(rolq({0,x,y,z},q[1]),q[2]))
 add(s,vz)
 --vdmp(q)
 return {q,vx,vy,vz,p}
 end)
---quicksort(s,1,#s)
 quicksort(v,1,#v)
 
 return v,s
+end
+
+function vradq(vw,r)
+return
+radq((vw.x)*r,{0,1,0})
+,radq((vw.y)*r,{1,0,0})
+,radq((vw.z)*r,{0,0,1})
+end
+
+function rots(x,y,z,qx,qy,qz)
+--return q,x,y,z
+return spread(rolq(rolq({0,x,y,z},qx),qy))
 end
 -->8
 --sort	
@@ -760,10 +862,10 @@ end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700007777000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000007007000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000007007000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700007777000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
