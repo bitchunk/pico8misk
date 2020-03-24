@@ -449,11 +449,15 @@ end
 function _init()
 menuitem(1,'save',function()
 scenesbat([[
-d st save_d 0
+d st spr_d 0
 k st save_k 0
 ]],{})
 end)
 menuitem(2,'load',function(v,i)
+scenesbat([[
+d st spr_d 0
+k st load_k 0
+]],{})
 end)
 
 btnc,btns,btrg,butrg=tablefill(0,8),{},{},{}
@@ -480,27 +484,43 @@ view.z=64
 
 genab=htbl[[x=true;y=true;z=true;]]
 gedef=htbl[[x=false;y=false;z=false;]]
+rfp=htbl[[0x0000 0x1040 0x050c 0x5a5a 0xfcf5 0xdfef 0xeff7 0xffff]]
+--rfp=htbl[[0xffff 0xeff7 0xdfef 0xfcf5 0x5a5a 0x050c 0x1040 0x0000]]
+--vdmp(rfp)
 
 spid=0
 vtxs={}
 vcol=10
 --cam.z=64
 opos.z=0
+oposb.z=0
 orot.z=0
-rview.z=64
+rview.z=0
 --cat(view,htbl[[r{x=0;y=0;z=0;}]])
 ldps=3
-vtxsel=1
+vtxsel={1}
+vtxslt=1
+vtxslf=1
+dblwait=0
 
 getmouse()
 dragstart(opos,1)
 dragstart(view,1)
 dragstart(rview,1)
-
-pspal=tablefill(0,4,16)
-ecxy('0 0 4 16',function(x,y)
-pspal[y][x]=sget(x,y+32)
+--cls()
+--pspal=tablefill(0,4,16)
+pspal=tablefill(0,16)
+ecxy('0 0 2 1',function(c,r)
+ecxy('0 0 4 8',function(x,y)
+--pspal[y+c*8][x]=sget(x+c*4,y+32)
+pspal[y+c*8]+=shl(sget(x+c*4,y+32),12-x*4)
+--pset(x,y+c*8+32,pspal[y+c*8][x])
+--pspal[y][x]=sget(x,y+32)
 end)
+end)
+--stop()
+
+--lzbf=tablefill(1,16,16,16)
 --pspal=split[[2 8 14 15]]
 
 scenesbat[[
@@ -534,72 +554,127 @@ local p=0
 
 rectfill(64,64,64,64,7)
 --local msk=0xcc33.8
-local msk=0x7ffe.8
+--local msk=0x7ffe
+local msk=0xffff
 local qx,qy,qz=vradq(rview,1/128)
+local zr=64/view.z
 
 fillp(0xcc33.8)
 if genab.x then
-for i=-8,7 do
-local y=i*64/view.z*8
-local q,x1,y1,z=rots(56*64/view.z,y,0,qx,qy,qz)
-local q,x2,y2,z=rots(-64*64/view.z,y,0,qx,qy,qz)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,6)
+local c=genab.z and 13 or 6
+for i=max(opos.y-2,-7),min(opos.y+2,7) do
+local y=genab.y and i*zr*8 or 0
+local x=genab.z and i*zr*8 or 0
+--local x1,y1,z=rots(56*zr,y,x,qx,qy,qz)
+--local x2,y2,z=rots(-64*zr,y,x,qx,qy,qz)
+local q,x1,y1,z=rots(56*zr,y,x,qx,qy,qz)
+local q,x2,y2,z=rots(-64*zr,y,x,qx,qy,qz)
+line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,c)
 end
 end
 if genab.y then
-for i=-8,7 do
-local x=i*64/view.z*8
-local q,x1,y1,z=rots(x,56*64/view.z,0,qx,qy,qz)
-local q,x2,y2,z=rots(x,-64*64/view.z,0,qx,qy,qz)
+for i=max(opos.x-2,-7),min(opos.x+2,7) do
+local x=i*zr*8
+--local x1,y1,z=rots(x,56*zr,0,qx,qy,qz)
+--local x2,y2,z=rots(x,-64*zr,0,qx,qy,qz)
+local q,x1,y1,z=rots(x,56*zr,0,qx,qy,qz)
+local q,x2,y2,z=rots(x,-64*zr,0,qx,qy,qz)
 line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,6)
 end
 end
 if genab.z then
-for i=-8,7 do
-local z=view.z/8*i
-local q,x1,y1,z=rots(0,0,144-view.z,qx,qy,qz)
-local q,x2,y2,z=rots(0,0,view.z-128,qx,qy,qz)
---line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,12)
+local st=genab.x and opos.x or opos.y
+for i=max(st-2,-7),min(st+2,7) do
+local x=i*zr*8
+--local x1,y1,z=rots(x,0,56*zr,qx,qy,qz)
+--local x2,y2,z=rots(x,0,-64*zr,qx,qy,qz)
+local q,x1,y1,z=rots(x,0,56*zr,qx,qy,qz)
+local q,x2,y2,z=rots(x,0,-64*zr,qx,qy,qz)
+line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,6)
 end
 end
 
-local q,x1,y1,z=rots(56*64/view.z,opos.y*8,opos.z*8,qx,qy,qz)
-local q,x2,y2,z=rots(-64*64/view.z,opos.y*8,opos.z*8,qx,qy,qz)
+--local x1,y1,z=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
+--local x2,y2,z=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
+local q,x1,y1,z=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
+local q,x2,y2,z=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
 fillp(not genab.x and msk)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,8)
-local q,x1,y1,z=rots(opos.x*8,56*64/view.z,opos.z*8,qx,qy,qz)
-local q,x2,y2,z=rots(opos.x*8,-64*64/view.z,opos.z*8,qx,qy,qz)
+line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x28)
+--local x1,y1,z=rots(opos.x*8*zr,56*zr,opos.z*8*zr,qx,qy,qz)
+--local x2,y2,z=rots(opos.x*8*zr,-64*zr,opos.z*8*zr,qx,qy,qz)
+local q,x1,y1,z=rots(opos.x*8*zr,56*zr,opos.z*8*zr,qx,qy,qz)
+local q,x2,y2,z=rots(opos.x*8*zr,-64*zr,opos.z*8*zr,qx,qy,qz)
 fillp(not genab.y and msk)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,11)
-local q,x1,y1,z=rots(opos.x*8,opos.y*8,56*64/view.z,qx,qy,qz)
-local q,x2,y2,z=rots(opos.x*8,opos.y*8,-64*64/view.z,qx,qy,qz)
+line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x3b)
+--local x1,y1,z=rots(opos.x*8*zr,opos.y*8*zr,56*zr,qx,qy,qz)
+--local x2,y2,z=rots(opos.x*8*zr,opos.y*8*zr,-64*zr,qx,qy,qz)
+local q,x1,y1,z=rots(opos.x*8*zr,opos.y*8*zr,56*zr,qx,qy,qz)
+local q,x2,y2,z=rots(opos.x*8*zr,opos.y*8*zr,-64*zr,qx,qy,qz)
 fillp(not genab.z and msk)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,12)
+line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x1c)
 fillp()
 
 
 local vt={}
 local tr={}
-tmap(vtxs,function(v)
-return add(vt,cat({},v))
+local vs={}
+--tmap(vtxs,function(v,i)
+--vs=tmap(rolzsort(cat({},vtxs),qx,qy,qz),function(v,i)
+vs=tmap(cat({},vtxs),function(v,i)
+local q,vx,vy,vz=spread(rolq(rolq(rolq({0,v[1],v[2],v[3]},qx),qy),qz))
+--x,y,z,
+v=cat({},{vx,vy,vz,v[4],i=i})
+
+--v[1]=v[1]*8*zr+view.x
+--v[2]=v[2]*8*zr+view.y
+v[1]=v[1]*8*zr+view.x
+v[2]=v[2]*8*zr+view.y
+
+vt[v.i]=v
+return v
 end)
-tmap(rolzsort(vt,vradq(rview,1/128)),function(v,i)
-pfnc=vtxsel~=i and circ or circfill
---dbg(join(v,' '))
-v[1]=v[1]*rview.z/view.z*8+view.x
-v[2]=v[2]*rview.z/view.z*8+view.y
-drawp(v[1],v[2],v[3],v[4],2)
-add(tr,v)
-if #tr>2 then
+
+
+--tmap(rolzsort(vt,vradq(rview,1/128)),function(v,i)
+--tmap(rolzsort(vt,qx,qy,qz),function(v,i)
+tmap(vs,function(v,i)
+local pfnc=inrng(v.i,vtxslt,vtxslf) and circfill or circ
+
+--v[1]=v[1]*8*zr+view.x
+--v[2]=v[2]*8*zr+view.y
+if inrng(v.i,vtxslt,vtxslf)  then
+circfill(v[1],v[2],2,i==vtxslt and v[4] or 11)
+end
+circ(v[1],v[2],2,v[4])
+--drawp(v[1],v[2],v[3],v[4],2)
+--if #tr>2 then
+if v.i>2 then
+tr={v,vt[v.i-1],vt[v.i-2]}
+--fp=rtfp(facerad(tr[1]))
+--dbg('vt '..join(v,' '))
+--dbg('nm '..join(normalize(v,1),' '))
+--dbg('nm '..join(normalize({view.x,view.y,view.z},1),' '))
+--dbg(dot(normalize({view.x,view.y,view.z}),normalize(v,1)))
+local c,fp=light(pspal[tr[1][4]],dot({0,0,-64},normalize(v,1)))
+dbg('li '..join({c,fp},' '))
+
+if cull(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2])==band(v.i,1) then
+return
+end
+--add(tr,v)
 --vdmp(tr[1])
 --trifill(tr[1],tr[2],{10 ,10},14)
-raster_triangle(tr[1],tr[2],tr[3])
-p01_triangle_163(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2],tr[3][4])
+--raster_triangle(tr[1],tr[2],tr[3])
+dbg(facerad(tr[1]))
+
+if fp then
+p01_triangle_163(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2],c,fp)
+end
 --dbg(join({tr[1][1],tr[2][1],tr[3][1]}, "--"))
 del(tr,tr[1])
 end
 end)
-
+fillp()
 v=cubr
 pfnc=circ
 drawo(v,opos.x-1,opos.y-1,opos.z-1)
@@ -634,28 +709,23 @@ genab.z=keystate['z']
 end
 spid=0
 
-dbg(view.stx)
 if mo.lt then
 dragstart(opos)
 dragstart(view)
-lhold=true
+chold=true
 elseif mo.lut then
-lhold=false
+chold=false
 end
 
 if keystate[' '] and mo.l then
+--**drag view**
 spid=1
---if mo.l then
 local x,y=dragrot(view,{x=0,y=0,z=0})
 view.ud(x,y)
---end
 else
-if mo.l and lhold then
+if mo.l and chold then
+--**drag cursor**
 scale=8
---local p={dragdist(opos,rview)}
---local qx,qy,qz=vradq({x=rview.x,y=rview.y,z=rview.z},1/128)
---local p={(mo.x-64)/scale*rvrsa('x'),(mo.y-64)/scale*rvrsa('y'),64}
-
 local p={dragdist(opos,rview)}
 tmap((genab.x and cos((rview.x%64)/64)>0 or genab.y and cos((rview.y%64)/64)<0) and split'x y z' or split'z y x',function(v)
 local s=sgn(cos(rview[v]/128))
@@ -665,46 +735,52 @@ p=cat({},p)
 end)
 opos.ud()
 scale=1
+
+if opos.x+opos.y+opos.z~=oposb.x+oposb.y+oposb.z then
+dblwait=9
+end
 cat(oposb,opos)
 end
 end
+dblwait=max(0,dblwait-1)
 
-if keystate['0'] then
 if mo.rt then
-rview.z=64
-rview.ud(0,0)
-elseif mo.l then
-opos.z=0
-opos.ud(0,0)
-elseif keystate[' '] then
-view.ud(64,64)
-view.z=64
-else
-end
-end
-if mo.rt then
+--**cancel cursor drag**
 cat(opos,oposb)
-lhold=false
+chold=false
 end
 
-if mo.m then
+if mo.mt then
+chold=true
+end
+if mo.m and chold then
+--**rotate view**
 spid=2
-
 dragstart(rview)
 dragstart(orot)
---if keystate[' '] then
---scale=8
---local x,y,z=dragdist(orot,rview)
---orot.ud(x,y)
---orot.z=z
+local x,y,z=dragrot(rview,{x=0,y=0,z=0})
+z=rview.z
+if keystate[' '] then
+--**rot z and fix rot x-y **
+z=x
+x,y=rview.x,rview.y
+end
+if keystate.x then
+--**
+x,y,z=rview.x,x,rview.z
+end
+if keystate.c then
+x,y,z=x,rview.y,rview.z
+end
+if keystate.z then
+x,y,z=rview.y,rview.y,x+y
+end
 
---scale=1
---else
+rview.z=z
+rview.ud(x,y)
+--rview.ud(inrng(x,128,-128) and x or -sgn(x)*128
+--,inrng(y,128,-128) and y or -sgn(y)*128)
 
-
-local x,y=dragrot(rview,{x=0,y=0,z=0})
-rview.ud(inrng(-x,256,-256) and x or toc(x,abs(x))*256
-,inrng(-y,256,-256) and y or toc(y,abs(y))*256)
 --end
 end
 
@@ -716,62 +792,98 @@ else
 vcol=(vcol+16+mo.w)%16
 --rview.z-=mo.w*2
 end
+
 if keytrg[','] then
-vtxsel=max(vtxsel-1,1)
+	if mo.r then
+		vtxslt=min(vtxslt,#vtxs)
+		vtxslf=max(vtxslf-1,1)
+	else
+		vtxslt=max(vtxslt-1,1)
+		vtxslf=vtxslt
+	end
 end
 if keytrg['.'] then
-vtxsel=min(vtxsel+1,#vtxs+1)
+	if mo.r then
+		vtxslf=min(vtxslf+1,#vtxs+1)
+	else
+		vtxslt=min(vtxslt+1,#vtxs+1)
+		vtxslf=vtxslt
+	end
 end
 if mo.ldb then
-local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
-if vtxsel<#vtxs+1 then
-vtxs[vtxsel]=v
-else
-add(vtxs,v)
-vtxsel=#vtxs+1
-end
+--	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
+	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
+--	if vtxslt<#vtxs+1 then
+	if vtxslt~=vtxslf then
+	 local st=min(vtxslf,vtxslt)
+	 local en=max(vtxslf,vtxslt-1)
+cls()
+		for i=st,en do
+		ecxy('1 0 3 1',function(a)
+		vtxs[i][a]+=v[a]-vtxs[en][a]
+--		v.i=vtxslt
+		end)
+--		vtxs[vtxslt]=v
+--		v.i=vtxslt
+		end
+--		stop()
+ 
+	else
+	add(vtxs,v)
+	v.i=#vtxs
+	vtxslt=#vtxs+1
+	vtxslf=vtxslt
+	end
 end
 if mo.rdb then
-del(vtxs,vtxs[vtxsel<#vtxs+1 and vtxsel or #vtxs])
+del(vtxs,vtxs[vtxslt<#vtxs+1 and vtxslt or #vtxs])
 vtxs=cat({},vtxs)
-vtxsel=#vtxs+1
+vtxslt=#vtxs+1
+vtxslf=vtxslt
 end
 
-
+dbg(vtxslt)
+dbg(vtxslf)
+if keystate['0'] then
+chold=false
+if mo.m then
+rview.z=0
+rview.ud(0,0)
+elseif mo.l then
+opos.z=0
+opos.ud(0,0)
+elseif keystate[' '] then
+view.ud(64,64)
+view.z=64
+else
 end
-,save_d=function(o)
+end
+end
+
+,spr_d=function(o)
 cls()
 spr(0,0,0,16,16)
 outline('exit:q','32 0 7 0')
-o.prm.cr.rs(7)
+if(o.prm.cr)o.prm.cr.rs(7)
 fillp(0xcc33)
-o.prm.r.rs(0x16)
+if(o.prm.r)o.prm.r.rs(0x16)
 fillp()
 
 end
 ,save_k=function(o)
 if o.fst then
-o.prm.cr=mkrect('0 4 8 8')
-o.prm.r=mkrect('0 4 1 1')
-keystate["\r"]=false
+keytrg["\r"]=false
 end
-local r=o.prm.cr
+--local r=o.prm.cr
 
-if mo.l or mo.r then
-local reqn=toc(#vtxs,16)+1
-local w,h
-=toc(mo.x)*8-r.x
-,toc(mo.y)*8-r.y
-o.prm.r.ud(r.x,r.y
-,mid(8,w,toc(reqn,toc(h+8))*8)
-,mid(8,h,toc(reqn,toc(w+8))*8))
-else
-r=o.prm.cr.ud(toc(mo.x)*8,toc(mo.y)*8)
-end
+local c,s=selcell(#vtxs)
+o.prm.r=s or o.prm.r
+o.prm.cr=c or o.prm.cr
 
 if keytrg["\r"] then
 local st=0x40*32
 local ids={}
+--local r=o.prm.r
 local r=o.prm.r
 ecxy({toc(r.x),toc(r.y),toc(r.w),toc(r.h)},function(x,y)
 add(ids,x+y*16)
@@ -781,7 +893,7 @@ local sec,seci=0,1
 tmap(vtxs,function(v,i)
 if ids[1] then
 poke2
-(ids[1]%16*8+toc(ids[1],16)*8*0x40
+(ids[1]%16*4+toc(ids[1],16)*8*0x40
 +(i-1)%2*2+toc((i-1)%16,2)*0x40
 ,bor((v[1]+8)+(v[2]+8)*16+(v[3]+8)*256,shl(v[4],12))
 )
@@ -801,8 +913,60 @@ d st def_d 0
 k st def_k 0
 ]]
 end
+end
+,load_k=function(o)
+if o.fst then
+keytrg["\r"]=false
+end
+local c,s=selcell()
+o.prm.r=s or o.prm.r
+o.prm.cr=c or o.prm.cr
+if keytrg["\r"] then
+local st=0x40*32
+local ids={}
+local r=o.prm.r
+local ts={}
+ecxy({toc(r.x),toc(r.y),toc(r.w),toc(r.h)},function(x,y)
+add(ids,x+y*16)
+end)
 
-
+cls()
+tmap(ids,function(v,i)
+local l,t=v%16*8,toc(v,16)*8
+ecxy('0 0 2 8',function(x,y)
+if peek2(l/2+(t+y)*0x40+x*2)~=0 then
+x*=4
+--vdmp(peek2(l+t*0x40+x*2))
+--local v={
+--sget(x+l,y+t)
+--,sget(x+l+1,y+t)
+--,sget(x+l+2,y+t)
+--,sget(x+l+3,y+t)
+--}
+--vdmp({l,t})
+add(ts,{
+sget(x+l,y+t)-8
+,sget(x+l+1,y+t)-8
+,sget(x+l+2,y+t)-8
+,sget(x+l+3,y+t)
+,i=#ts+1
+})
+else
+end
+end)
+end)
+vtxs=#ts>0 and ts or vtxs
+scenesbat[[
+d st def_d 0
+k st def_k 0
+]]
+end
+if keystate.q then
+scenesbat[[
+d st def_d 0
+k st def_k 0
+]]
+end
 end
 }
 
@@ -892,15 +1056,14 @@ mst.x,mst.y=mo.x,mo.y
 mo.ldb=mo.lt and mst.lh>0
 mo.rdb=mo.rt and mst.rh>0
 
-if not mo.l then
 mst.lh=max(0,mst.lh-1)
-else
-mst.lh=8
+if mo.lt then
+mst.lh=12
 end
-if not mo.r then
+
 mst.rh=max(0,mst.rh-1)
-else
-mst.rh=8
+if mo.rt then
+mst.rh=12
 end
 
 return mo
@@ -992,6 +1155,23 @@ end
 --dbg(panhold[k])
 end
 
+function selcell(mx)
+local cr,sr=mkrect'0 0 8 8'
+if mo.l or mo.r then
+local reqn=toc(mx or 32767,16)+1
+local w,h
+=toc(mo.x)*8-r.x
+,toc(mo.y)*8-r.y
+--o.prm.r.ud(r.x,r.y
+sr=mkrect'0 0 0 0'.ud(r.x,r.y
+,mid(8,w,toc(reqn,toc(h+8))*8)
+,mid(8,h,toc(reqn,toc(w+8))*8))
+else
+r=cr.ud(toc(mo.x)*8,toc(mo.y)*8)
+--r=o.prm.cr.ud(toc(mo.x)*8,toc(mo.y)*8)
+end
+return cr,sr
+end
 -->8
 --quaternion
 function radq(r,v)
@@ -1026,25 +1206,17 @@ end)
 --local qx,qy,qz=vradq(rview,1/128)
 
 local v,s=rolzsort(v,vradq(rview,1/128))
+local zr=64/view.z
 tmap(v,function(p,i)
---p[5]=pspal[p[5]][min(ceil((3.2-#v/i)),3)]
 local s=sizc[p[4]..''] or 0
 
-drawp(p[1]*rview.z/view.z*8+view.x,p[2]*rview.z/view.z*8+view.y,p[3],p[4],s)
---drawp(spread(p))
+--drawp(p[1]*rview.z/view.z*8+view.x,p[2]*rview.z/view.z*8+view.y,p[3],p[4],s)
+drawp(p[1]*8*zr+view.x,p[2]*zr*8+view.y,p[3]*8*zr+view.z,p[4],s)
 end)
 end
 
 pfnc=circfill
 function drawp(x,y,z,p,s)
-
---x=x*view.z/rview.z
---y=y*view.z/rview.z
-
-
---vdmp(sizc['15'])
---circfill(x*8+view.x,y*8+view.y,4,p)
---dbg(sizc['15'])
 
 pfnc(x,y,s,p)
 end
@@ -1053,13 +1225,10 @@ function rolzsort(v,qx,qy,qz)
 local s={}
 tmap(v,function(v)
 local x,y,z,p=spread(v)
---local a,x,y,z,p=spread(v)
---local q,vx,vy,vz=spread(rolq(rolq(rolq({0,x,y,z},q[1]),q[2]),q[3]))
-local q,vx,vy,vz=spread(rolq(rolq({0,x,y,z},qx),qy))
+--local q,vx,vy,vz=spread(rolq(rolq({0,x,y,z},qx),qy))
+local q,vx,vy,vz=spread(rolq(rolq(rolq({0,x,y,z},qx),qy),qz))
 add(s,vz)
---vdmp(q)
-return {vx,vy,vz,p,q}
---return {q,vx,vy,vz,p}
+return {vx,vy,vz,p,q,i=v.i}
 end)
 quicksort(v,1,#v)
 
@@ -1072,49 +1241,134 @@ radq((vw.x)*r,{0,1,0})
 ,radq((vw.y)*r,{1,0,0})
 ,radq((vw.z)*r,{0,0,1})
 end
+--function vradq(vw,r)
+--return
+--radq((vw.x)*r,{0,1,0})
+--,radq((vw.y)*r,{1,0,0})
+--,radq((vw.z)*r,{0,0,1})
+--end
 
+--function rots(x,y,z,qx,qy,qz)
+----return x,y,z,q
+--return spread(rolq(rolq(rolq({x,y,z,0},qx),qy),qz))
+--end
 function rots(x,y,z,qx,qy,qz)
 --return q,x,y,z
-return spread(rolq(rolq({0,x,y,z},qx),qy))
+return spread(rolq(rolq(rolq({0,x,y,z},qx),qy),qz))
 end
+
+
+--function trad(v0,v1,v2)
+--local ba,bc={},{}
+--ba[1]=v0[1]-v1[1]
+--ba[2]=v0[2]-v1[2]
+--bc[1]=v2[1]-v1[1]
+--bc[2]=v2[2]-v1[2]
+--
+--local babc=ba[1]*bc[1]+ba[2]*bc[2]
+--local ban=(ba[1]*ba[1])+(ba[2]*ba[2])
+--local bcn=(bc[1]*bc[1])+(bc[2]*bc[2])
+--local x=babc/(sqrt(ban*bcn))
+--return atan2(x,-sqrt(1-x*x))
+--end
+function facerad(v)
+return acos(1/sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]))
+end
+
+function acos(x)
+ return atan2(x,-sqrt(1-x*x))
+end
+function rtfp(r)
+return rfp[mid(1,8,flr(r*100)-8)]
+end
+function light(c,r)
+local s=mid(r*4,0,3)
+dbg('q '..c..' '..s..' '..band(s,0x.ffff)*7+1)
+--local s=toc(r,4)
+--return rfp[mid(1,8,flr(r*7)+1)]
+return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
+--return toc(r,4),rfp[mid(1,8,flr(r*7)+1)]
+end
+
+function dot(v1,v2)--,x3,y3,z3
+	return v1[1]*v2[1]+v1[2]*v2[2]+v1[3]*v2[3]
+end
+
+function normalize(v,s)
+--s=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3])
+local l=sqrt(v[1]^2 + v[2]^2 + v[3]^2)
+return {v[1]/l,v[2]/l,v[3]/l}
+end
+
+function cull(x1,y1,x2,y2,x3,y3)
+return (x2-x1)*(y3-y1)<(x3-x1)*(y2-y1) and 1 or 0
+end
+
+
 -->8
 --sort	
-function pivot(a,i,j)
-local k=i+1
-while k<=j and a[i][4]==a[k][4] do k+=1 end
-if(k>j)return -1
-if(a[i][4]>=a[k][4])return i
-return k
-end
+--function pivot(a,i,j)
+--local k=i+1
+--while k<=j and a[i][4]==a[k][4] do k+=1 end
+--if(k>j)return -1
+--if(a[i][4]>=a[k][4])return i
+--return k
+--end
+--
+--function partition(a,i,j,x)
+--local l,r=i,j
+--while l<=r do
+--while l<=j and a[l][4]<x do l+=1 end
+--while r>=i and a[r][4]>=x do r-=1 end
+--if(l>r)break
+--a[l],a[r]=a[r],a[l]
+--l+=1
+--r-=1
+--end
+--return l
+--end
+--
+--function quicksort(a,i,j)
+--if(i==j)return
+--local p=pivot(a,i,j)
+--if p!=-1 then
+----print(join({i,j,#a,p,a[p]},' '))
+--local k=partition(a,i,j,a[p][4])
+--quicksort(a,i,k-1)
+--quicksort(a,k,j)
+--end
+--end
 
-function partition(a,i,j,x)
-local l,r=i,j
-while l<=r do
-while l<=j and a[l][4]<x do l+=1 end
-while r>=i and a[r][4]>=x do r-=1 end
-if(l>r)break
-a[l],a[r]=a[r],a[l]
-l+=1
-r-=1
-end
-return l
-end
+function quicksort(a,l,r)
+local i,j
+if(l>=r)return
+j=l
 
-function quicksort(a,i,j)
-if(i==j)return
-local p=pivot(a,i,j)
-if p!=-1 then
---print(join({i,j,#a,p,a[p]},' '))
-local k=partition(a,i,j,a[p][4])
-quicksort(a,i,k-1)
-quicksort(a,k,j)
+for i=l+1,r do
+if a[i][3]<a[l][3] then
+j+=1
+a[j],a[i]=a[i],a[j]
 end
 end
+a[l],a[j]=a[j],a[l]
+
+quicksort(a,l,j-1)
+quicksort(a,j+1,r)
+end
+--
+--function swap(a,b)
+--int w;
+--
+--w = a;
+--a = b;
+--b= w;
+--end
 -->8
 --trifill
 --@p01
-function p01_triangle_163(x0,y0,x1,y1,x2,y2,col)
+function p01_triangle_163(x0,y0,x1,y1,x2,y2,col,fp)
  color(col)
+ fillp(fp)
  if(y1<y0)x0,x1,y0,y1=x1,x0,y1,y0
  if(y2<y0)x0,x2,y0,y2=x2,x0,y2,y0
  if(y2<y1)x1,x2,y1,y2=x2,x1,y2,y1
@@ -1319,14 +1573,14 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00150000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-012d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-023b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-124f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-01560000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-15670000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-d6770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000248f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0015249a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+012d24a7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+023b23bf000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+124f1dc6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+015615d6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+156728ef000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+d6774ef7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 248f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 249a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 14a70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1361,3 +1615,12 @@ d48a0000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 548a598a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 c98ac48a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+668a96aa000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+964a9489000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+668896ac000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
