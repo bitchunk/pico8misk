@@ -475,12 +475,15 @@ sizc=htbl[[15=3; 6=1; 1=0; 0=-1; 10=1;]]
 kmap=htbl[[{-1 0} {1 0} {0 -1} {0 1}]]
 wasd=htbl[[a d w s]]
 view=mkrect[[64 64 128 128]]
+viewb=mkrect[[64 64 128 128]]
 --cam=mkrect[[64 64 128 128]]
 rview=mkrect[[0 0 128 128]]
 opos=mkrect[[0 0 0 0]]
 oposb=mkrect[[0 0 0 0]]
 orot=mkrect[[0 0 0 0]]
+orotb=mkrect[[0 0 0 0]]
 view.z=64
+viewb.z=64
 
 genab=htbl[[x=true;y=true;z=true;]]
 gedef=htbl[[x=false;y=false;z=false;]]
@@ -490,6 +493,7 @@ rfp=htbl[[0x0000 0x1040 0x050c 0x5a5a 0xfcf5 0xdfef 0xeff7 0xffff]]
 
 spid=0
 vtxs={}
+vtxsb={}
 vcol=10
 --cam.z=64
 opos.z=0
@@ -499,7 +503,8 @@ rview.z=0
 --cat(view,htbl[[r{x=0;y=0;z=0;}]])
 ldps=3
 vtxsel={1}
-vtxslt=1
+vtxsl=1
+vtxsll=0
 vtxslf=1
 dblwait=0
 
@@ -508,7 +513,14 @@ dragstart(opos,1)
 dragstart(view,1)
 dragstart(rview,1)
 --cls()
---pspal=tablefill(0,4,16)
+--clickp=tablefill({0,0,0,false},16*16*16)
+clickp={}
+ecxy('-8 0 16 1',function(z)
+ecxy('-8 -8 16 16',function(x,y)
+add(clickp,{x,y,z})
+end)
+end)
+
 pspal=tablefill(0,16)
 ecxy('0 0 2 1',function(c,r)
 ecxy('0 0 4 8',function(x,y)
@@ -549,84 +561,102 @@ def_d=function(o)
 cls(5)
 local p=0
 
-
---cat(v,htbl'0{{0 6 0}{0 7 0}{0 6 0}}')
-
 rectfill(64,64,64,64,7)
---local msk=0xcc33.8
---local msk=0x7ffe
+
 local msk=0xffff
 local qx,qy,qz=vradq(rview,1/128)
 local zr=64/view.z
 
+--**draw glid**
 fillp(0xcc33.8)
-if genab.x then
+clickp={x={},y={},z={}}
 local c=genab.z and 13 or 6
+if genab.x then
 for i=max(opos.y-2,-7),min(opos.y+2,7) do
-local y=genab.y and i*zr*8 or 0
-local x=genab.z and i*zr*8 or 0
---local x1,y1,z=rots(56*zr,y,x,qx,qy,qz)
---local x2,y2,z=rots(-64*zr,y,x,qx,qy,qz)
-local q,x1,y1,z=rots(56*zr,y,x,qx,qy,qz)
-local q,x2,y2,z=rots(-64*zr,y,x,qx,qy,qz)
+local x=0
+local y=genab.z and opos.y*8*zr or i*8*zr
+local z=genab.z and (i-opos.y+opos.z)*8*zr or opos.z*8*zr
+local q,x1,y1,z1=rots(56*zr+x,y,z,qx,qy,qz)
+local q,x2,y2,z2=rots(-64*zr+x,y,z,qx,qy,qz)
 line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,c)
 end
 end
 if genab.y then
 for i=max(opos.x-2,-7),min(opos.x+2,7) do
-local x=i*zr*8
---local x1,y1,z=rots(x,56*zr,0,qx,qy,qz)
---local x2,y2,z=rots(x,-64*zr,0,qx,qy,qz)
-local q,x1,y1,z=rots(x,56*zr,0,qx,qy,qz)
-local q,x2,y2,z=rots(x,-64*zr,0,qx,qy,qz)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,6)
+local x=genab.z and opos.x*8*zr or i*8*zr
+local y=0
+local z=genab.z and (i-opos.x+opos.z)*8*zr or opos.z*8*zr
+local q,x1,y1,z1=rots(x,56*zr+y,z,qx,qy,qz)
+local q,x2,y2,z2=rots(x,-64*zr+y,z,qx,qy,qz)
+line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,c)
 end
 end
 if genab.z then
 local st=genab.x and opos.x or opos.y
 for i=max(st-2,-7),min(st+2,7) do
-local x=i*zr*8
---local x1,y1,z=rots(x,0,56*zr,qx,qy,qz)
---local x2,y2,z=rots(x,0,-64*zr,qx,qy,qz)
-local q,x1,y1,z=rots(x,0,56*zr,qx,qy,qz)
-local q,x2,y2,z=rots(x,0,-64*zr,qx,qy,qz)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,6)
+local x=genab.x and i*8*zr or opos.x*8*zr
+local y=genab.y and i*8*zr or opos.y*8*zr
+local z=genab.x and 0 or 0
+local q,x1,y1,z1=rots(x,y,56*zr+z,qx,qy,qz)
+local q,x2,y2,z2=rots(x,y,-64*zr+z,qx,qy,qz)
+line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,c)
 end
 end
 
 --local x1,y1,z=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
 --local x2,y2,z=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
+
+--local q,x1,y1,z=rots(56*zr,0,0,qx,qy,qz)
+--local q,x2,y2,z=rots(-64*zr,0,0,qx,qy,qz)
+--line(x1+view.x+opos.x*8*zr,y1+view.y+opos.y*8*zr,x2+view.x+opos.x*8*zr,y2+view.y+opos.y*8*zr,0x28)
+fillp(not genab.x and msk)
 local q,x1,y1,z=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
 local q,x2,y2,z=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
-fillp(not genab.x and msk)
 line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x28)
 --local x1,y1,z=rots(opos.x*8*zr,56*zr,opos.z*8*zr,qx,qy,qz)
 --local x2,y2,z=rots(opos.x*8*zr,-64*zr,opos.z*8*zr,qx,qy,qz)
 local q,x1,y1,z=rots(opos.x*8*zr,56*zr,opos.z*8*zr,qx,qy,qz)
 local q,x2,y2,z=rots(opos.x*8*zr,-64*zr,opos.z*8*zr,qx,qy,qz)
+--local q,x1,y1,z=rots(0,56*zr,0,qx,qy,qz)
+--local q,x2,y2,z=rots(0,-64*zr,0,qx,qy,qz)
 fillp(not genab.y and msk)
+--line(x1+view.x+opos.x*8*zr,y1+view.y+opos.z*8*zr,x2+view.x+opos.x*8*zr,y2+view.y+opos.z*8*zr,0x3b)
 line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x3b)
 --local x1,y1,z=rots(opos.x*8*zr,opos.y*8*zr,56*zr,qx,qy,qz)
 --local x2,y2,z=rots(opos.x*8*zr,opos.y*8*zr,-64*zr,qx,qy,qz)
 local q,x1,y1,z=rots(opos.x*8*zr,opos.y*8*zr,56*zr,qx,qy,qz)
 local q,x2,y2,z=rots(opos.x*8*zr,opos.y*8*zr,-64*zr,qx,qy,qz)
+--local q,x1,y1,z=rots(0,0,56*zr,qx,qy,qz)
+--local q,x2,y2,z=rots(0,0,-64*zr,qx,qy,qz)
 fillp(not genab.z and msk)
 line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x1c)
+--line(x1+view.x+opos.x*8*zr,y1+view.y+opos.y*8*zr,x2+view.x+opos.x*8*zr,y2+view.y+opos.y*8*zr,0x1c)
 fillp()
 
+--tmap(clickp,function(p)
+ 
+--ecxy({-2,-2,5,5},function(x,y)
+--local q,x,y,z=rots
+--(genab.x and ((opos.x+x)*8*zr) or ((opos.y+y)*8*zr)
+--,not genab.z and ((opos.y+y)*8*zr) or 0
+--,genab.z and ((opos.z+(genab.x and y or x))*8*zr) or 0
+--,qx,qy,qz)
+--circfill(x+view.x,y+view.y,1,8)
+--end)
+--dbg('nm'..join(normalize({0,0,-64}),' '))
 
 local vt={}
 local tr={}
 local vs={}
+local qx,qy,qz=vradq(rview,1/128)
 --tmap(vtxs,function(v,i)
 --vs=tmap(rolzsort(cat({},vtxs),qx,qy,qz),function(v,i)
 vs=tmap(cat({},vtxs),function(v,i)
 local q,vx,vy,vz=spread(rolq(rolq(rolq({0,v[1],v[2],v[3]},qx),qy),qz))
---x,y,z,
+--local q,vx,vy,vz=spread(rolq(rolq(rolq({0,v[1]-opos.x,v[2]-opos.y,v[3]},qx),qy),qz))
 v=cat({},{vx,vy,vz,v[4],i=i})
-
---v[1]=v[1]*8*zr+view.x
---v[2]=v[2]*8*zr+view.y
+--v[1]=v[1]*8*zr+view.x+opos.x*8*zr
+--v[2]=v[2]*8*zr+view.y+opos.y*8*zr
 v[1]=v[1]*8*zr+view.x
 v[2]=v[2]*8*zr+view.y
 
@@ -634,38 +664,40 @@ vt[v.i]=v
 return v
 end)
 
-
 --tmap(rolzsort(vt,vradq(rview,1/128)),function(v,i)
 --tmap(rolzsort(vt,qx,qy,qz),function(v,i)
 tmap(vs,function(v,i)
-local pfnc=inrng(v.i,vtxslt,vtxslf) and circfill or circ
+local pfnc=inrng(v.i,vtxsl,vtxslf) and circfill or circ
 
 --v[1]=v[1]*8*zr+view.x
 --v[2]=v[2]*8*zr+view.y
-if inrng(v.i,vtxslt,vtxslf)  then
-circfill(v[1],v[2],2,i==vtxslt and v[4] or 11)
+--if inrng(v.i,vtxsl,vtxslf)  then
+if inrng(v.i,vtxsl,vtxsl+vtxsll) then
+circfill(v[1],v[2],2,i==vtxsl and v[4] or 11)
 end
 circ(v[1],v[2],2,v[4])
 --drawp(v[1],v[2],v[3],v[4],2)
 --if #tr>2 then
 if v.i>2 then
-tr={v,vt[v.i-1],vt[v.i-2]}
+tr={vt[v.i-2],vt[v.i-1],v}
+--tr={v,vt[v.i-1],vt[v.i-2]}
 --fp=rtfp(facerad(tr[1]))
 --dbg('vt '..join(v,' '))
 --dbg('nm '..join(normalize(v,1),' '))
 --dbg('nm '..join(normalize({view.x,view.y,view.z},1),' '))
 --dbg(dot(normalize({view.x,view.y,view.z}),normalize(v,1)))
-local c,fp=light(pspal[tr[1][4]],dot({0,0,-64},normalize(v,1)))
-dbg('li '..join({c,fp},' '))
+local c,fp=light(pspal[tr[1][4]],dot({0,0,-32},normalize(v,1)))
+--dbg('li '..join({c,fp},' '))
 
-if cull(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2])==band(v.i,1) then
+--if cull(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2])==band(v.i,1) then
+if cull(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2])<1 then
 return
 end
 --add(tr,v)
 --vdmp(tr[1])
 --trifill(tr[1],tr[2],{10 ,10},14)
 --raster_triangle(tr[1],tr[2],tr[3])
-dbg(facerad(tr[1]))
+--dbg(facerad(tr[1]))
 
 if fp then
 p01_triangle_163(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2],c,fp)
@@ -677,22 +709,37 @@ end)
 fillp()
 v=cubr
 pfnc=circ
-drawo(v,opos.x-1,opos.y-1,opos.z-1)
+local q,vx,vy,vz=spread(rolq(rolq(rolq({0,opos.x,opos.y,opos.z},qx),qy),qz))
+--drawo(v,opos.x-1,opos.y-1,opos.z-1)
+drawp(vx*8*zr+view.x,vy*8*zr+view.y,vz*8*zr+view.z,15,3)
+orot.x=vx*8*zr+view.x
+orot.y=vy*8*zr+view.y
 
+rectfill(0,120,127,127,0)
+for x=0,15 do
+fillp()
+rectfill(1+x*8,121,4+x*8,126,lshr(pspal[x],4))
+fillp(0x0f0f)
+rectfill(5+x*8,121,6+x*8,126,lshr(pspal[x],4))
+end
+fillp()
+pset(1,121,5)
 pal(7,vcol)
-spr(spid,mo.x,mo.y)
+rect(vcol*8,120,vcol*8+8,127,pspal[vcol])
+spr(spid,mo.x-3,mo.y-3)
 pal()
 
 end
 ,def_k=function(o)
 local b
+if not keystate.█ then
 tmap(kmap,function(v,i)
 if btn(i-1) or btn(i-1,1) then
 view.x-=kmap[i][1]
 view.y-=kmap[i][2]
 end
 end)
-
+end
 cat(genab,gedef)
 local x,y
 =cos(rview.x%64/64)>0
@@ -721,9 +768,16 @@ if keystate[' '] and mo.l then
 --**drag view**
 spid=1
 local x,y=dragrot(view,{x=0,y=0,z=0})
+--local x,y,z=dragrot(rview,{x=opos.x,y=opos.y,z=opos.z})
+
 view.ud(x,y)
 else
-if mo.l and chold then
+if not mo.r and mo.l and chold then
+if mo.y>120 then
+vcol=flr(min(mo.x/8,15))
+return
+end
+
 --**drag cursor**
 scale=8
 local p={dragdist(opos,rview)}
@@ -737,36 +791,60 @@ opos.ud()
 scale=1
 
 if opos.x+opos.y+opos.z~=oposb.x+oposb.y+oposb.z then
-dblwait=9
+dblwait=12
 end
+--**[cancel] drag cursor**
 cat(oposb,opos)
 end
 end
 dblwait=max(0,dblwait-1)
 
-if mo.rt then
+if mo.l and mo.rt then
 --**cancel cursor drag**
 cat(opos,oposb)
 chold=false
 end
 
-if mo.mt then
+if mo.rt then
 chold=true
+ytzr=not inrng(mo.y,24,104)
+xtzr=not inrng(mo.x,24,104)
+cat(viewb,view)
+cat(orotb,orot)
+
+elseif mo.rut then
+ytzr=false
+xtzr=false
 end
-if mo.m and chold then
+
+if mo.r and chold then
+
 --**rotate view**
 spid=2
 dragstart(rview)
 dragstart(orot)
-local x,y,z=dragrot(rview,{x=0,y=0,z=0})
-z=rview.z
+local x,y,zx,zy=dragrot(rview,{x=0,y=0,z=0})
+--local x,y,z=dragrot(rview,{x=opos.x,y=opos.y,z=opos.z})
+--z=rview.z
+local z=rview.z
+if ytzr then
+spid=3
+z=zx
+x=rview.x
+end
+if xtzr then
+spid=3
+z=zy
+y=rview.y
+end
+
 if keystate[' '] then
 --**rot z and fix rot x-y **
 z=x
 x,y=rview.x,rview.y
 end
+--**rot view with one axis 
 if keystate.x then
---**
 x,y,z=rview.x,x,rview.z
 end
 if keystate.c then
@@ -776,8 +854,20 @@ if keystate.z then
 x,y,z=rview.y,rview.y,x+y
 end
 
+if mo.l then
+--orot.z=z
+--orot.ud(x,y)
+else
 rview.z=z
 rview.ud(x,y)
+end
+
+
+--view.x+=(flr(orot.x)==64 and  or sgn(orot.x))
+--view.x=64-64*sin(64/orot.x)
+--view.x=viewb.x-orot.x+orotb.x
+
+
 --rview.ud(inrng(x,128,-128) and x or -sgn(x)*128
 --,inrng(y,128,-128) and y or -sgn(y)*128)
 
@@ -789,74 +879,87 @@ mo.ldb=false
 mo.rdb=false
 view.z-=mo.w*2
 else
-vcol=(vcol+16+mo.w)%16
+--vcol=(vcol+16+mo.w)%16
+opos.z=mid(opos.z+mo.w,-8,7)
 --rview.z-=mo.w*2
 end
 
-if keytrg[','] then
-	if mo.r then
-		vtxslt=min(vtxslt,#vtxs)
-		vtxslf=max(vtxslf-1,1)
-	else
-		vtxslt=max(vtxslt-1,1)
-		vtxslf=vtxslt
-	end
+if keytrg.█ then
+vtxsl=#vtxs
+vtxsll=-#vtxs+1
 end
-if keytrg['.'] then
-	if mo.r then
-		vtxslf=min(vtxslf+1,#vtxs+1)
-	else
-		vtxslt=min(vtxslt+1,#vtxs+1)
-		vtxslf=vtxslt
-	end
+if mo.r and keytrg[','] or keytrg['<'] then
+		vtxsll=min(vtxsll-1,vtxsl-1)
+ 	vtxsl=mid(vtxsl,1,#vtxs)
+elseif keytrg[','] then
+		vtxsl=max(vtxsl-1,1)
+		vtxsll=0
+end
+if mo.r and keytrg['.'] or keytrg['>'] then
+	vtxsll=min(vtxsll+1,#vtxs-vtxsl)
+	vtxsl=mid(vtxsl,1,#vtxs)
+elseif keytrg['.'] then
+		vtxsl=min(vtxsl+1,#vtxs+1)
+	 vtxsll=0
 end
 if mo.ldb then
 --	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
+ vtxsb={}
+	tmap(vtxs,function(v)
+	add(vtxsb,cat({},v))
+	end)
 	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
---	if vtxslt<#vtxs+1 then
-	if vtxslt~=vtxslf then
-	 local st=min(vtxslf,vtxslt)
-	 local en=max(vtxslf,vtxslt-1)
-cls()
+	if vtxsll~=0 or vtxsl<=#vtxs then
+	 local st=max(1,min(vtxsl+vtxsll,vtxsl))
+	 local en=min(#vtxs,max(vtxsl+vtxsll,vtxsl))
 		for i=st,en do
 		ecxy('1 0 3 1',function(a)
 		vtxs[i][a]+=v[a]-vtxs[en][a]
---		v.i=vtxslt
+
 		end)
---		vtxs[vtxslt]=v
---		v.i=vtxslt
 		end
 --		stop()
  
 	else
 	add(vtxs,v)
+
 	v.i=#vtxs
-	vtxslt=#vtxs+1
-	vtxslf=vtxslt
+	vtxsl=#vtxs+1
+	vtxslf=vtxsl
 	end
 end
 if mo.rdb then
-del(vtxs,vtxs[vtxslt<#vtxs+1 and vtxslt or #vtxs])
+vtxsb={}
+tmap(vtxs,function(v)
+add(vtxsb,cat({},v))
+end)
+del(vtxs,vtxs[vtxsl<#vtxs+1 and vtxsl or #vtxs])
 vtxs=cat({},vtxs)
-vtxslt=#vtxs+1
-vtxslf=vtxslt
+vtxsl=#vtxs+1
+vtxsll=0
 end
 
-dbg(vtxslt)
+dbg(vtxsl)
 dbg(vtxslf)
 if keystate['0'] then
 chold=false
-if mo.m then
+if mo.r then
 rview.z=0
 rview.ud(0,0)
 elseif mo.l then
 opos.z=0
 opos.ud(0,0)
+oposb.z=0
+oposb.ud(0,0)
 elseif keystate[' '] then
 view.ud(64,64)
 view.z=64
 else
 end
+end
+
+if keytrg.▥ then
+vtxs,vtxsb=vtxsb,vtxs
 end
 end
 
@@ -880,7 +983,9 @@ local c,s=selcell(#vtxs)
 o.prm.r=s or o.prm.r
 o.prm.cr=c or o.prm.cr
 
-if keytrg["\r"] then
+if o.prm.r then
+if keytrg["\r"] or keytrg.z then
+poke(0x5f30,1)
 local st=0x40*32
 local ids={}
 --local r=o.prm.r
@@ -907,21 +1012,25 @@ end)
 cstore(0,0,0x2000)
 
 end
+end
 if keystate.q then
 scenesbat[[
 d st def_d 0
 k st def_k 0
 ]]
+return 1
 end
 end
 ,load_k=function(o)
 if o.fst then
-keytrg["\r"]=false
+--keytrg["\r"]=false
 end
 local c,s=selcell()
 o.prm.r=s or o.prm.r
 o.prm.cr=c or o.prm.cr
-if keytrg["\r"] then
+if o.prm.r then
+if keytrg["\r"] or keytrg.z then
+poke(0x5f30,1)
 local st=0x40*32
 local ids={}
 local r=o.prm.r
@@ -960,12 +1069,15 @@ scenesbat[[
 d st def_d 0
 k st def_k 0
 ]]
+return 1
+end
 end
 if keystate.q then
 scenesbat[[
 d st def_d 0
 k st def_k 0
 ]]
+return 1
 end
 end
 }
@@ -1000,6 +1112,7 @@ isdebug=true
 dbg(join({opos.x,opos.y,opos.z},' '))
 dbg(join({view.x,view.y,view.z},' '))
 dbg(join({rview.x,rview.y,rview.z},' '))
+dbg('o:'..join({orot.x,orot.y,orot.z},' '))
 dbg(stat(1))
 dbg_print()
 end
@@ -1058,12 +1171,12 @@ mo.rdb=mo.rt and mst.rh>0
 
 mst.lh=max(0,mst.lh-1)
 if mo.lt then
-mst.lh=12
+mst.lh=mo.ldb and 0 or 12
 end
 
 mst.rh=max(0,mst.rh-1)
 if mo.rt then
-mst.rh=12
+mst.rh=mo.rdb and 0 or 12
 end
 
 return mo
@@ -1079,11 +1192,12 @@ end
 function dragrot(vw,rv)
 local qx,qy,qz=vradq({x=rv.x,y=rv.y,z=rv.z},1/128)
 --local x,y,z=mo.x-mo.sx*sgn(rv.x),mo.y-mo.sy*sgn(rv.y),64
-local x,y,z=mo.x-mo.sx,mo.y-mo.sy,64
+local x,y,zx,zy=mo.x-mo.sx,mo.y-mo.sy,mo.x-mo.sx,mo.y-mo.sy
 return
  x/scale+vw.stx
 ,y/scale+vw.sty
-,z/scale+vw.stz
+,zx/scale+vw.stz
+,zy/scale+vw.stz
 end
 
 function dragdist(vw,rv)
@@ -1282,12 +1396,11 @@ function rtfp(r)
 return rfp[mid(1,8,flr(r*100)-8)]
 end
 function light(c,r)
-local s=mid(r*4,0,3)
-dbg('q '..c..' '..s..' '..band(s,0x.ffff)*7+1)
---local s=toc(r,4)
---return rfp[mid(1,8,flr(r*7)+1)]
-return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
---return toc(r,4),rfp[mid(1,8,flr(r*7)+1)]
+local s=1-mid(r*2,0,1)
+--local s=mid(r*4,0,3)
+--dbg('q '..c..' '..s..' '..band(s,0x.ffff)*7+1)
+--return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
+return band(lshr(c,flr(s+1)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
 end
 
 function dot(v1,v2)--,x3,y3,z3
@@ -1301,7 +1414,7 @@ return {v[1]/l,v[2]/l,v[3]/l}
 end
 
 function cull(x1,y1,x2,y2,x3,y3)
-return (x2-x1)*(y3-y1)<(x3-x1)*(y2-y1) and 1 or 0
+return (x2-x1)*(y3-y1)>(x3-x1)*(y2-y1) and 1 or 0
 end
 
 
@@ -1543,10 +1656,10 @@ function raster_triangle(p0,p1,p2)
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700007777000007077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000007007000070070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000007007000070070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700007777000770700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700007777000007077000007700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000007007000070070000707000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000007007000070070000700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700007777000770700000077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1573,14 +1686,14 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000248f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000128e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0015249a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-012d24a7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-023b23bf000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+012d49a7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+013b23bf000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 124f1dc6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 015615d6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 156728ef000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-d6774ef7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+d6778ef7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 248f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 249a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 14a70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1605,14 +1718,14 @@ d6774ef7000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-548a5c8a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-dc8ad48a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-d48a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+548a5c8a00000000000000000000000000000000000000008f847f843fda9f7a0000000000000000000000000000000000000000000000000000000000000000
+dc8ad48a00000000000000000000000000000000000000007f748f741f9a9f7a0000000000000000000000000000000000000000000000000000000000000000
+d48a000000000000000000000000000000000000000000008f8480841f4a9f7a0000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000007f847084000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000007f747074000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000008f748074000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000080847074000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000080847084000000000000000000000000000000000000000000000000000000000000000000000000
 548a598a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 c98ac48a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1621,6 +1734,11 @@ c98ac48a000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-668a96aa000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-964a9489000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-668896ac000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+668a96aa0000000000000000000000000000000000000000000000008f847f840000000000000000000000000000000000000000000000000000000000000000
+964a94890000000000000000000000000000000000000000000000007f748f740000000000000000000000000000000000000000000000000000000000000000
+668896ac0000000000000000000000000000000000000000000000008f8480840000000000000000000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000000000007f8470840000000000000000000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000000000007f7470740000000000000000000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000000000008f7480740000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000808470740000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000808470840000000000000000000000000000000000000000000000000000000000000000
