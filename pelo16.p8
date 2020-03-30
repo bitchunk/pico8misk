@@ -451,12 +451,14 @@ menuitem(1,'save',function()
 scenesbat([[
 d st spr_d 0
 k st save_k 0
+m us nil 0
 ]],{t='exit form save: q',p='32 1 13 7'})
 end)
 menuitem(2,'load',function(v,i)
 scenesbat([[
 d st spr_d 0
 k st load_k 0
+m us nil 0
 ]],{t='exit form load: q',p='32 1 3 7'})
 end)menuitem(3,'scale test',function(v,i)
 scenesbat([[
@@ -475,13 +477,15 @@ drsc,drscs=mkscenes(split'e d')
 
 zoom=1
 scale=1/zoom
-aperture=0.9
-focusd=8
+--aperture=0.9
+--focusd=8
 arad=atan2(1/3,1)
 
 
 
 vdist=4
+prsp=4
+
 sizc=htbl[[15=3; 6=1; 1=0; 0=-1; 10=1;]]
 kmap=htbl[[{-1 0} {1 0} {0 -1} {0 1}]]
 wasd=htbl[[a d w s]]
@@ -557,7 +561,8 @@ end)
 
 scenesbat[[
 d st def_d 0
-k st def_k 0
+k st edt_k 0
+m st def_k 0
 ]]
 
 cubr=tablefill(6,3,3,3)
@@ -586,6 +591,7 @@ rectfill(64,64,64,64,7)
 local msk=0xffff
 local qx,qy,qz=vradq(orot,1/128)
 local rx,ry,rz=vradq(rview,1/128)
+--local zr=8*64+prsp
 local zr=64/view.z
 
 --**draw glid**
@@ -595,6 +601,8 @@ local c=genab.z and 13 or 6
 if genab.x then
 for i=max(opos.y-2,-7),min(opos.y+2,7) do
 local x=0
+--local y=genab.z and zr/(view.z-opos.y+prsp) or zr/(view.z-i)
+--local z=genab.z and zr/(view.z-i-opos.y+opos.z) or opos.z*8*zr
 local y=genab.z and opos.y*8*zr or i*8*zr
 local z=genab.z and (i-opos.y+opos.z)*8*zr or opos.z*8*zr
 local q,x1,y1,z1=rots(56*zr+x,y,z,qx,qy,qz)
@@ -666,7 +674,8 @@ fillp()
 --**vertex draw**
 fillp()
 local q,x1,y1,z1=rots(lpos.x*zr,lpos.y*zr,lpos.z*zr,qx,qy,qz)
-zr=8*64/view.z
+--zr=8*64/view.z
+zr=8*64+prsp
 local pre
 tmap(cat({{lpos.x/8,lpos.y/8,lpos.z/8,7}},objdraw(obj)),function(v,i)
 --local pfnc=inrng(v.i,vtxsl,vtxslf) and circfill or circ
@@ -674,18 +683,21 @@ tmap(cat({{lpos.x/8,lpos.y/8,lpos.z/8,7}},objdraw(obj)),function(v,i)
 --v[1]=v[1]*8*zr+view.x
 --v[2]=v[2]*8*zr+view.y
 --if inrng(v.i,vtxsl,vtxslf)  then
+
 if v.i then
+local z1=zr/(view.z-v[3]+prsp)
+local z2=zr/(view.z-pre[3]+prsp)
 fillp()
 if inrng(v.i,vtxsl,vtxsl+vtxsll) then
-circfill(v[1]*zr+view.x,v[2]*zr+view.y,2,v.i==vtxsl and v[4] or 11)
+circfill(v[1]*z1+view.x,v[2]*z1+view.y,2,v.i==vtxsl and v[4] or 11)
 end
 if v.i==#vtxs then
-line(v[1]*zr+view.x,v[2]*zr+view.y,pre[1]*zr+view.x,pre[2]*zr+view.y)
+line(v[1]*z1+view.x,v[2]*z1+view.y,pre[1]*z2+view.x,pre[2]*z2+view.y)
 end
-circ(v[1]*zr+view.x,v[2]*zr+view.y,2,v.t and 12 or v[4])
+circ(v[1]*z1+view.x,v[2]*z1+view.y,2,v.t and 12 or v[4])
 
 else
-spr(4,v[1]*zr+view.x-3,v[2]*zr+view.y-3)
+spr(4,v[1]*z1+view.x-3,v[2]*z1+view.y-3)
 --fillp(0x5a5a.8)
 --circfill(v[1]*zr+view.x,v[2]*zr+view.y,2,v[4])
 --fillp()
@@ -699,7 +711,8 @@ pfnc=circ
 --local q,vx,vy,vz=spread(rolq(rolq(rolq({0,opos.x,opos.y,opos.z},qx),qy),qz))
 local q,vx,vy,vz=spread(vrolq(opos.x,opos.y,opos.z,qx,qy,qz))
 --drawo(v,opos.x-1,opos.y-1,opos.z-1)
-drawp(vx*zr+view.x,vy*zr+view.y,vz*zr+view.z,15,3)
+local z1=zr/(view.z-vz+prsp)
+drawp(vx*z1+view.x,vy*z1+view.y,vz*z1+view.z,15,3)
 
 rectfill(0,120,127,127,0)
 for x=0,15 do
@@ -713,17 +726,128 @@ pset(1,121,5)
 pal(7,vcol)
 rect(vcol*8,120,vcol*8+8,127,pspal[vcol])
 pal()
-eachpal('6bc$',(#vtxs<3 or vtxsl%2==1) and 'bb0' or 'c0c')
+eachpal('567bc$',(#vtxs<3 or vtxsl%2==1) and 'b0bb0' or '0cc0c')
 spr(spid,mo.x-3,mo.y-3)
 pal()
 
 end
+,edt_k=function(o)
+if mo.lt then
+dragstart(opos)
+chold=true
+elseif mo.lut then
+chold=false
+end
+
+
+if mo.r and mo.lt and #vtxs>0 then
+local v=vtxs[min(vtxsl,#vtxs)]
+opos.z=v[3]
+opos.ud(v[1],v[2])
+vtxsl=#vtxs+1
+vtxsll=0
+end
+if mo.l and mo.rt then
+--**cancel cursor drag**
+cat(opos,oposb)
+chold=false
+end
+
+if not mo.r and mo.l and chold then
+--**change edit color**
+if mo.y>120 then
+vcol=flr(min(mo.x/8,15))
+chold=false
+return
+end
+
+--**drag cursor**
+if not keystate[' '] and mo.l then
+scale=8
+local p={dragdist(opos,orot)}
+tmap((genab.x and cos((orot.x%64)/64)>0 or genab.y and cos((orot.y%64)/64)<0) and split'x y z' or split'z y x',function(v)
+local s=sgn(cos(orot[v]/128))
+s=1
+opos[v]=mid(-8,7,flr(genab[v] and del(p,p[1])*s+0.5 or opos[v]))
+p=cat({},p)
+end)
+opos.ud()
+scale=1
+
+if opos.x+opos.y+opos.z~=oposb.x+oposb.y+oposb.z then
+dblwait=12
+end
+--**[cancel] drag cursor**
+cat(oposb,opos)
+end
+end
+
+if keytrg.█ then
+if vtxsl==#vtxs then
+vtxsl=#vtxs+1
+vtxsll=0
+else
+vtxsl=#vtxs
+vtxsll=-#vtxs+1
+end
+end
+if mo.r and keytrg[','] or keytrg['<'] then
+		vtxsll=min(vtxsll-1,vtxsl-1)
+ 	vtxsl=mid(vtxsl,1,#vtxs)
+elseif keytrg[','] then
+		vtxsl=max(vtxsl-1,1)
+		vtxsll=0
+end
+if mo.r and keytrg['.'] or keytrg['>'] then
+	vtxsll=min(vtxsll+1,#vtxs-vtxsl)
+	vtxsl=mid(vtxsl,1,#vtxs)
+elseif keytrg['.'] then
+		vtxsl=min(vtxsl+1,#vtxs+1)
+	 vtxsll=0
+end
+if mo.ldb then
+--	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
+ vtxsb={}
+	tmap(vtxs,function(v)
+	add(vtxsb,cat({},v))
+	end)
+	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
+	if vtxsll~=0 or vtxsl<=#vtxs then
+	 local st=max(1,min(vtxsl+vtxsll,vtxsl))
+	 local en=min(#vtxs,max(vtxsl+vtxsll,vtxsl))
+		for i=st,en do
+		ecxy('1 0 3 1',function(a)
+		vtxs[i][a]+=v[a]-vtxs[en][a]
+		end)
+		vtxs[i][4]=vcol
+		end
+--		stop()
+ 
+	else
+	add(vtxs,v)
+
+	v.i=#vtxs
+	vtxsl=#vtxs+1
+	vtxslf=vtxsl
+	end
+end
+if mo.rdb then
+vtxsb={}
+tmap(vtxs,function(v)
+add(vtxsb,cat({},v))
+end)
+del(vtxs,vtxs[vtxsl<#vtxs+1 and vtxsl or #vtxs])
+vtxs=cat({},vtxs)
+vtxsl=#vtxs+1
+vtxsll=0
+end
+end
 ,def_k=function(o)
-local b
-if o.fst then
+--input key as view control
 oscl.w=1
 oscl.h=1
-end
+--if o.fst then
+--end
 if not keystate.█ then
 tmap(kmap,function(v,i)
 if btn(i-1) or btn(i-1,1) then
@@ -749,61 +873,31 @@ end
 spid=0
 
 if mo.lt then
-dragstart(opos)
 dragstart(view)
 chold=true
 elseif mo.lut then
 chold=false
 end
 
+
+--if mo.lt then
+--dragstart(opos)
+--dragstart(view)
+--chold=true
+--elseif mo.lut then
+--chold=false
+--end
+
 if keystate[' '] and mo.l then
 --**drag view**
 spid=1
 local x,y=dragrot(view,{x=0,y=0,z=0})
---local x,y,z=dragrot(orot,{x=opos.x,y=opos.y,z=opos.z})
-
 view.ud(x,y)
 else
-if not mo.r and mo.l and chold then
-if mo.y>120 then
-vcol=flr(min(mo.x/8,15))
-chold=false
-return
-end
-
---**drag cursor**
-scale=8
-local p={dragdist(opos,orot)}
-tmap((genab.x and cos((orot.x%64)/64)>0 or genab.y and cos((orot.y%64)/64)<0) and split'x y z' or split'z y x',function(v)
-local s=sgn(cos(orot[v]/128))
-s=1
-opos[v]=mid(-8,7,flr(genab[v] and del(p,p[1])*s+0.5 or opos[v]))
-p=cat({},p)
-end)
-opos.ud()
-scale=1
-
-if opos.x+opos.y+opos.z~=oposb.x+oposb.y+oposb.z then
-dblwait=12
-end
---**[cancel] drag cursor**
-cat(oposb,opos)
-end
+--opos cursor control
 end
 dblwait=max(0,dblwait-1)
 
-if mo.r and mo.lt and #vtxs>0 then
-local v=vtxs[min(vtxsl,#vtxs)]
-opos.z=v[3]
-opos.ud(v[1],v[2])
-vtxsl=#vtxs+1
-vtxsll=0
-end
-if mo.l and mo.rt then
---**cancel cursor drag**
-cat(opos,oposb)
-chold=false
-end
 
 if mo.rt then
 chold=true
@@ -901,72 +995,14 @@ lpos.z-=mo.w*2
 elseif keystate[' '] then
 mo.ldb=false
 mo.rdb=false
-view.z-=mo.w*2
+view.z-=mo.w
 else
 --vcol=(vcol+16+mo.w)%16
 opos.z=mid(opos.z+mo.w,-8,7)
 --orot.z-=mo.w*2
 end
 
-if keytrg.█ then
-if vtxsl==#vtxs then
-vtxsl=#vtxs+1
-vtxsll=0
-else
-vtxsl=#vtxs
-vtxsll=-#vtxs+1
-end
-end
-if mo.r and keytrg[','] or keytrg['<'] then
-		vtxsll=min(vtxsll-1,vtxsl-1)
- 	vtxsl=mid(vtxsl,1,#vtxs)
-elseif keytrg[','] then
-		vtxsl=max(vtxsl-1,1)
-		vtxsll=0
-end
-if mo.r and keytrg['.'] or keytrg['>'] then
-	vtxsll=min(vtxsll+1,#vtxs-vtxsl)
-	vtxsl=mid(vtxsl,1,#vtxs)
-elseif keytrg['.'] then
-		vtxsl=min(vtxsl+1,#vtxs+1)
-	 vtxsll=0
-end
-if mo.ldb then
---	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
- vtxsb={}
-	tmap(vtxs,function(v)
-	add(vtxsb,cat({},v))
-	end)
-	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
-	if vtxsll~=0 or vtxsl<=#vtxs then
-	 local st=max(1,min(vtxsl+vtxsll,vtxsl))
-	 local en=min(#vtxs,max(vtxsl+vtxsll,vtxsl))
-		for i=st,en do
-		ecxy('1 0 3 1',function(a)
-		vtxs[i][a]+=v[a]-vtxs[en][a]
-		end)
-		vtxs[i][4]=vcol
-		end
---		stop()
- 
-	else
-	add(vtxs,v)
 
-	v.i=#vtxs
-	vtxsl=#vtxs+1
-	vtxslf=vtxsl
-	end
-end
-if mo.rdb then
-vtxsb={}
-tmap(vtxs,function(v)
-add(vtxsb,cat({},v))
-end)
-del(vtxs,vtxs[vtxsl<#vtxs+1 and vtxsl or #vtxs])
-vtxs=cat({},vtxs)
-vtxsl=#vtxs+1
-vtxsll=0
-end
 
 if keystate['0'] then
 chold=false
@@ -975,7 +1011,6 @@ orot.z=0
 orot.ud(0,0)
 rview.ud(0,0).z=0
 elseif mo.l then
-dbg(111)
 opos.z=0
 opos.ud(0,0)
 oposb.z=0
@@ -1001,8 +1036,15 @@ if o.fst then
 oscl.w=1
 oscl.h=1
 end
-oscl.w=(mo.x-mo.sx)/128*8
-oscl.h=(mo.y-mo.sy)/128*8
+--dbg(mo.x-mo.sx)
+if mo.l or mo.r then
+--mo.sx=mo.x-oscl.w
+--mo.sy=mo.y-oscl.h
+end
+--if not mo.l and not mo.r then
+oscl.w=1+(mo.x-mo.sx)/128*8
+oscl.h=1+(mo.y-mo.sy)/128*8
+--end
 if not keystate.█ then
 tmap(kmap,function(v,i)
 if btn(i-1) or btn(i-1,1) then
@@ -1014,7 +1056,7 @@ end
 if keystate.q then
 scenesbat[[
 d st def_d 0
-k st def_k 0
+k st edt_k 0
 ]]
 return 1
 end
@@ -1072,7 +1114,8 @@ end
 if keystate.q then
 scenesbat[[
 d st def_d 0
-k st def_k 0
+k st edt_k 0
+m rm
 ]]
 return 1
 end
@@ -1087,11 +1130,12 @@ o.prm.cr=c or o.prm.cr
 if o.prm.r then
 if keytrg["\r"] or keytrg.z then
 poke(0x5f30,1)
-local st=0x40*32
 local ids={}
 local r=o.prm.r
 local ts={}
-ecxy({toc(r.x),toc(r.y),toc(r.w),toc(r.h)},function(x,y)
+r.ud(toc(r.x),toc(r.y),toc(r.w),toc(r.h))
+
+ecxy({r.x,r.y,r.w,r.h},function(x,y)
 add(ids,x+y*16)
 end)
 
@@ -1100,7 +1144,8 @@ tmap(ids,function(v,i)
 local l,t=v%16*8,toc(v,16)*8
 ecxy('0 0 2 8',function(x,y)
 if peek2(l/2+(t+y)*0x40+x*2)~=0 then
-x*=4
+x=x*4+l
+y+=t
 --vdmp(peek2(l+t*0x40+x*2))
 --local v={
 --sget(x+l,y+t)
@@ -1111,10 +1156,10 @@ x*=4
 --}
 --vdmp({l,t})
 add(ts,{
-sget(x+l,y+t)-8
-,sget(x+l+1,y+t)-8
-,sget(x+l+2,y+t)-8
-,sget(x+l+3,y+t)
+sget(x,y)-8
+,sget(x+1,y)-8
+,sget(x+2,y)-8
+,sget(x+3,y)
 ,i=#ts+1
 })
 else
@@ -1124,7 +1169,8 @@ end)
 vtxs=#ts>0 and ts or vtxs
 scenesbat[[
 d st def_d 0
-k st def_k 0
+k st edt_k 0
+m rm
 ]]
 return 1
 end
@@ -1132,7 +1178,8 @@ end
 if keystate.q then
 scenesbat[[
 d st def_d 0
-k st def_k 0
+k st edt_k 0
+m rm
 ]]
 return 1
 end
@@ -1454,13 +1501,13 @@ end
 --local x=babc/(sqrt(ban*bcn))
 --return atan2(x,-sqrt(1-x*x))
 --end
-function facerad(v)
-return acos(1/sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]))
-end
+--function facerad(v)
+--return acos(1/sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]))
+--end
 
-function acos(x)
- return atan2(x,-sqrt(1-x*x))
-end
+--function acos(x)
+-- return atan2(x,-sqrt(1-x*x))
+--end
 function rtfp(r)
 return rfp[mid(1,8,flr(r*100)-8)]
 end
@@ -1534,13 +1581,14 @@ vx*zr*oscl.w
 ,vy*zr*oscl.h
 ,vz*zr,v[4]
 ,i=i
-,s=i>2 and -vz-vt[i-1][3]-vt[i-2][3] or 32765
+--,s=i>2 and -vz-vt[i-1][3]-vt[i-2][3] or 32765
 })
-dbg(v.s)
+--dbg(v.s)
 --v[1]=v[1]
 --v[2]=v[2]
 --v[1]=v[1]*8*zr*oscl.w+view.x
 --v[2]=v[2]*8*zr*oscl.h+view.y
+--dbg(v[1])
 
 vt[v.i]=v
 return v
@@ -1589,16 +1637,24 @@ if cull(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2],-1)>0 then
 return
 end
 if fp then
-zr=8*64/view.z
+--zr=8*64/view.z
+zr=8*64+prsp
+local z1,z2,z3
+=zr/(view.z-tr[1][3]+prsp)
+,zr/(view.z-tr[2][3]+prsp)
+,zr/(view.z-tr[3][3]+prsp)
+--local z1,z2,z3=zr/tr[1][3],zr/tr[2][3],zr/tr[3][3]
+--local z1,z2,z3=tr[1][3]*zr,tr[2][3]*zr,tr[3][3]*zr
+--local z1,z2,z3=zr,zr,zr
 p01_triangle_163
-(tr[1][1]*zr+view.x
-,tr[1][2]*zr+view.y
-,tr[2][1]*zr+view.x
-,tr[2][2]*zr+view.y
-,tr[3][1]*zr+view.x
-,tr[3][2]*zr+view.y,c,fp)
+(tr[1][1]*z1+view.x
+,tr[1][2]*z1+view.y
+,tr[2][1]*z2+view.x
+,tr[2][2]*z2+view.y
+,tr[3][1]*z3+view.x
+,tr[3][2]*z3+view.y,c,fp)
+--dbg(tr[1][2]*z1+view.x)
 end
-
 --dbg(join({tr[1][1],tr[2][1],tr[3][1]}, "--"))
 --del(tr,tr[1])
 end
@@ -1661,11 +1717,11 @@ function vtopsort(v1,v2,v3)
 --if(v1[2]>v2[2]) v1[1],v1[2],v1[3]=v2[1],v2[2],v2[3]
 --if(v2[2]>v3[2]) v2[1],v2[2],v2[3]=v3[1],v3[2],v3[3]
 --if(v3[2]>v1[2]) v3[1],v3[2],v3[3]=v1[1],v1[2],v1[3]
-dbg(v1[2])
+--dbg(v1[2])
 if(v1[2]<v2[2]) v1,v2={v2[1],v2[2],v2[3]},{v1[1],v1[2],v1[3]}
 if(v2[2]<v3[2]) v2,v3={v3[1],v3[2],v3[3]},{v2[1],v2[2],v2[3]}
 if(v3[2]<v1[2]) v3,v1={v1[1],v1[2],v1[3]},{v3[1],v3[2],v3[3]}
-dbg(v1[2])
+--dbg(v1[2])
 return v1,v2,v3
 end
 -->8
