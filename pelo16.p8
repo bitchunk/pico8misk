@@ -452,14 +452,14 @@ scenesbat([[
 d st spr_d 0
 k st save_k 0
 m us nil 0
-]],{t='exit form save: q',p='32 1 13 7'})
+]],{t='exit form save: x',p='32 1 13 7'})
 end)
 menuitem(2,'load',function(v,i)
 scenesbat([[
 d st spr_d 0
 k st load_k 0
 m us nil 0
-]],{t='exit form load: q',p='32 1 3 7'})
+]],{t='exit form load: x',p='32 1 3 7'})
 end)menuitem(3,'scale test',function(v,i)
 scenesbat([[
 d st spr_d 0
@@ -486,6 +486,8 @@ arad=atan2(1/3,1)
 vdist=4
 prsp=4
 
+eface=true
+
 sizc=htbl[[15=3; 6=1; 1=0; 0=-1; 10=1;]]
 kmap=htbl[[{-1 0} {1 0} {0 -1} {0 1}]]
 wasd=htbl[[a d w s]]
@@ -505,7 +507,7 @@ viewb.z=64
 
 genab=htbl[[x=true;y=true;z=true;]]
 gedef=htbl[[x=false;y=false;z=false;]]
-rfp=htbl[[0x0000 0x1040 0x050c 0x5a5a 0xfcf5 0xdfef 0xeff7 0xffff]]
+rfp=htbl[[0x0003 0x0303 0x030f 0x0f0f 0x0f3f 0x3f3f 0x3fff 0xffff]]--rfp=htbl[[0x0000 0x1040 0x050c 0x5a5a 0xfcf5 0xdfef 0xeff7 0xffff]]
 --rfp=htbl[[0xffff 0xeff7 0xdfef 0xfcf5 0x5a5a 0x050c 0x1040 0x0000]]
 --vdmp(rfp)
 
@@ -591,91 +593,95 @@ rectfill(64,64,64,64,7)
 local msk=0xffff
 local qx,qy,qz=vradq(orot,1/128)
 local rx,ry,rz=vradq(rview,1/128)
---local zr=8*64+prsp
-local zr=64/view.z
-
+local zr=8*64+prsp
+local wz=view.z+prsp
+--local zr=64/wz
+//(8*64+prsp)/(view.z-z+prsp)*y+view.y
 --**draw glid**
 fillp(0xcc33.8)
 clickp={x={},y={},z={}}
 local c=genab.z and 13 or 6
 if genab.x then
-for i=max(opos.y-2,-7),min(opos.y+2,7) do
+for i=max(opos.y-2,-8),min(opos.y+2,7) do
+--local zr=(8*64+prsp)/(view.z-0+prsp)
 local x=0
 --local y=genab.z and zr/(view.z-opos.y+prsp) or zr/(view.z-i)
 --local z=genab.z and zr/(view.z-i-opos.y+opos.z) or opos.z*8*zr
-local y=genab.z and opos.y*8*zr or i*8*zr
-local z=genab.z and (i-opos.y+opos.z)*8*zr or opos.z*8*zr
-local q,x1,y1,z1=rots(56*zr+x,y,z,qx,qy,qz)
-local q,x2,y2,z2=rots(-64*zr+x,y,z,qx,qy,qz)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,c)
+--local y=genab.z and opos.y*8*zr or i*8*zr
+local y=genab.z and opos.y or i
+local z=genab.z and i-opos.y+opos.z or opos.z
+line3(7+x,y,z,-8+x,y,z,qx,qy,qz,c)
+--local q,x1,y1,z1=rots(7+x,y,z,qx,qy,qz)
+--local q,x2,y2,z2=rots(-8+x,y,z,qx,qy,qz)
+--local z1=zr/(wz-z1)
+--local z2=zr/(wz-z2)
+--line(x1*z1+view.x,y1*z1+view.y,x2*z2+view.x,y2*z2+view.y,c)
 end
 end
 if genab.y then
-for i=max(opos.x-2,-7),min(opos.x+2,7) do
-local x=genab.z and opos.x*8*zr or i*8*zr
+for i=max(opos.x-2,-8),min(opos.x+2,7) do
+--local x=genab.z and opos.x*8*zr or i*8*zr
+--local y=0
+--local z=genab.z and (i-opos.x+opos.z)*8*zr or opos.z*8*zr
+local x=genab.z and opos.x or i
 local y=0
-local z=genab.z and (i-opos.x+opos.z)*8*zr or opos.z*8*zr
-local q,x1,y1,z1=rots(x,56*zr+y,z,qx,qy,qz)
-local q,x2,y2,z2=rots(x,-64*zr+y,z,qx,qy,qz)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,c)
+local z=genab.z and i-opos.x+opos.z or opos.z
+line3(x,7+y,z,x,-8+y,z,qx,qy,qz,c)
+
+--local q,x1,y1,z1=rots(x,7+y,z,qx,qy,qz)
+--local q,x2,y2,z2=rots(x,-8+y,z,qx,qy,qz)
+--local z1=zr/(wz-z1)
+--local z2=zr/(wz-z2)
+--line(x1*z1+view.x,y1*z1+view.y,x2*z2+view.x,y2*z2+view.y,c)
+--line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,c)
 end
 end
 if genab.z then
 local st=genab.x and opos.x or opos.y
-for i=max(st-2,-7),min(st+2,7) do
-local x=genab.x and i*8*zr or opos.x*8*zr
-local y=genab.y and i*8*zr or opos.y*8*zr
+for i=max(st-2,-8),min(st+2,7) do
+--local x=genab.x and i*8*zr or opos.x*8*zr
+--local y=genab.y and i*8*zr or opos.y*8*zr
+--local z=genab.x and 0 or 0
+local x=genab.x and i or opos.x
+local y=genab.y and i or opos.y
 local z=genab.x and 0 or 0
-local q,x1,y1,z1=rots(x,y,56*zr+z,qx,qy,qz)
-local q,x2,y2,z2=rots(x,y,-64*zr+z,qx,qy,qz)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,c)
+--local q,x1,y1,z1=rots(x,y,7+z,qx,qy,qz)
+--local q,x2,y2,z2=rots(x,y,-8+z,qx,qy,qz)
+--local z1=zr/(wz-z1)
+--local z2=zr/(wz-z2)
+--line(x1*z1+view.x,y1*z1+view.y,x2*z2+view.x,y2*z2+view.y,c)
+line3(x,y,7+z,x,y,-8+z,qx,qy,qz,c)
+
 end
 end
 
---local x1,y1,z=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
---local x2,y2,z=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
-
---local q,x1,y1,z=rots(56*zr,0,0,qx,qy,qz)
---local q,x2,y2,z=rots(-64*zr,0,0,qx,qy,qz)
---line(x1+view.x+opos.x*8*zr,y1+view.y+opos.y*8*zr,x2+view.x+opos.x*8*zr,y2+view.y+opos.y*8*zr,0x28)
 fillp(not genab.x and msk)
-local q,x1,y1,z1=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
-local q,x2,y2,z2=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
---local q,x1,y1,z1=rots(x1,y1,z1,rx,ry,rz)
---local q,x2,y2,z2=rots(x2,y2,z2,rx,ry,rz)
---local q,x1,y1,z=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
---local q,x2,y2,z=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x28)
---line(x1+view.x+rview.x,y1+view.y+rview.y,x2+view.x+rview.x,y2+view.y+rview.y,0x28)
+--local q,x1,y1,z1=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
+--local q,x2,y2,z2=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
+--line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x28)
+line3(7,opos.y,opos.z,-8,opos.y,opos.z,qx,qy,qz,0x28)
 
---local x1,y1,z=rots(opos.x*8*zr,56*zr,opos.z*8*zr,qx,qy,qz)
---local x2,y2,z=rots(opos.x*8*zr,-64*zr,opos.z*8*zr,qx,qy,qz)
-local q,x1,y1,z=rots(opos.x*8*zr,56*zr,opos.z*8*zr,qx,qy,qz)
-local q,x2,y2,z=rots(opos.x*8*zr,-64*zr,opos.z*8*zr,qx,qy,qz)
---local q,x1,y1,z1=rots(x1,y1,z1,rx,ry,rz)
---local q,x2,y2,z2=rots(x2,y2,z2,rx,ry,rz)
---local q,x1,y1,z=rots(0,56*zr,0,qx,qy,qz)
---local q,x2,y2,z=rots(0,-64*zr,0,qx,qy,qz)
+--local q,x1,y1,z=rots(opos.x*8*zr,56*zr,opos.z*8*zr,qx,qy,qz)
+--local q,x2,y2,z=rots(opos.x*8*zr,-64*zr,opos.z*8*zr,qx,qy,qz)
 fillp(not genab.y and msk)
---line(x1+view.x+opos.x*8*zr,y1+view.y+opos.z*8*zr,x2+view.x+opos.x*8*zr,y2+view.y+opos.z*8*zr,0x3b)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x3b)
---line(x1+view.x+rview.x,y1+view.y+rview.y,x2+view.x+rview.x,y2+view.y+rview.y,0x3b)
---local x1,y1,z=rots(opos.x*8*zr,opos.y*8*zr,56*zr,qx,qy,qz)
---local x2,y2,z=rots(opos.x*8*zr,opos.y*8*zr,-64*zr,qx,qy,qz)
-local q,x1,y1,z=rots(opos.x*8*zr,opos.y*8*zr,56*zr,qx,qy,qz)
-local q,x2,y2,z=rots(opos.x*8*zr,opos.y*8*zr,-64*zr,qx,qy,qz)
---local q,x1,y1,z=rots(0,0,56*zr,qx,qy,qz)
---local q,x2,y2,z=rots(0,0,-64*zr,qx,qy,qz)
+--line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x3b)
+line3(opos.x,7,opos.z,opos.x,-8,opos.z,qx,qy,qz,0x3b)
+
 fillp(not genab.z and msk)
-line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x1c)
---line(x1+view.x+opos.x*8*zr,y1+view.y+opos.y*8*zr,x2+view.x+opos.x*8*zr,y2+view.y+opos.y*8*zr,0x1c)
+--local q,x1,y1,z=rots(opos.x*8*zr,opos.y*8*zr,56*zr,qx,qy,qz)
+--local q,x2,y2,z=rots(opos.x*8*zr,opos.y*8*zr,-64*zr,qx,qy,qz)
+--line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x1c)
+line3(opos.x,opos.y,7,opos.x,opos.y,-8,qx,qy,qz,0x1c)
 fillp()
 
---**vertex draw**
+
 fillp()
 local q,x1,y1,z1=rots(lpos.x*zr,lpos.y*zr,lpos.z*zr,qx,qy,qz)
 --zr=8*64/view.z
 zr=8*64+prsp
+
+--**line draw mode*
+
 local pre
 tmap(cat({{lpos.x/8,lpos.y/8,lpos.z/8,7}},objdraw(obj)),function(v,i)
 --local pfnc=inrng(v.i,vtxsl,vtxslf) and circfill or circ
@@ -685,6 +691,8 @@ tmap(cat({{lpos.x/8,lpos.y/8,lpos.z/8,7}},objdraw(obj)),function(v,i)
 --if inrng(v.i,vtxsl,vtxslf)  then
 
 if v.i then
+
+--**vertex draw**
 local z1=zr/(view.z-v[3]+prsp)
 local z2=zr/(view.z-pre[3]+prsp)
 fillp()
@@ -692,7 +700,8 @@ if inrng(v.i,vtxsl,vtxsl+vtxsll) then
 circfill(v[1]*z1+view.x,v[2]*z1+view.y,2,v.i==vtxsl and v[4] or 11)
 end
 if v.i==#vtxs then
-line(v[1]*z1+view.x,v[2]*z1+view.y,pre[1]*z2+view.x,pre[2]*z2+view.y)
+line(v[1]*z1+view.x,v[2]*z1+view.y,pre[1]*z2+view.x,pre[2]*z2+view.y,
+(v.i<3 or v.i%2==0) and 11 or 12)
 end
 circ(v[1]*z1+view.x,v[2]*z1+view.y,2,v.t and 12 or v[4])
 
@@ -890,6 +899,7 @@ end
 
 if keystate[' '] and mo.l then
 --**drag view**
+sss+=0.01
 spid=1
 local x,y=dragrot(view,{x=0,y=0,z=0})
 view.ud(x,y)
@@ -1025,6 +1035,10 @@ end
 if keytrg.▥ then
 vtxs,vtxsb=vtxsb,vtxs
 end
+
+if keytrg["\t"] then
+eface=not eface
+end
 end
 ,sc_d=function(o)
 cls(bgcol)
@@ -1053,7 +1067,7 @@ view.y-=kmap[i][2]
 end
 end)
 end
-if keystate.q then
+if keystate.x then
 scenesbat[[
 d st def_d 0
 k st edt_k 0
@@ -1111,7 +1125,7 @@ cstore(0,0,0x2000)
 
 end
 end
-if keystate.q then
+if keystate.x then
 scenesbat[[
 d st def_d 0
 k st edt_k 0
@@ -1175,7 +1189,7 @@ m rm
 return 1
 end
 end
-if keystate.q then
+if keystate.x then
 scenesbat[[
 d st def_d 0
 k st edt_k 0
@@ -1214,11 +1228,13 @@ end)
 
 isdebug=true
 dbg(join({opos.x,opos.y,opos.z},' '))
+dbg(join({orot.x,orot.y,orot.z},' '))
 dbg(join({view.x,view.y,view.z},' '))
 dbg(join({rview.x,rview.y,rview.z},' '))
 dbg('l:'..join({lpos.x,lpos.y,lpos.z},' '))
 --dbg('o:'..join({orot.x,orot.y,orot.z},' '))
 dbg(stat(1))
+dbg(sss)
 dbg(mo.x)
 dbg(mo.y)
 
@@ -1412,7 +1428,8 @@ return {cos(r/2),v[1]*s,v[2]*s,v[3]*s}
 end
 
 function qprd(q,r)
-return {q[1]*r[1]-q[2]*r[2]-q[3]*r[3]-q[4]*r[4]
+return
+{q[1]*r[1]-q[2]*r[2]-q[3]*r[3]-q[4]*r[4]
 ,q[1]*r[2]+q[2]*r[1]+q[3]*r[4]-q[4]*r[3]
 ,q[1]*r[3]+q[3]*r[1]+q[4]*r[2]-q[2]*r[4]
 ,q[1]*r[4]+q[4]*r[1]+q[2]*r[3]-q[3]*r[2]}
@@ -1452,6 +1469,16 @@ function drawp(x,y,z,p,s)
 pfnc(x,y,s,p)
 end
 
+
+function line3(x1,y1,z1,x2,y2,z2,qx,qy,qz,c)
+local q,x1,y1,z1=rots(x1,y1,z1,qx,qy,qz)
+local q,x2,y2,z2=rots(x2,y2,z2,qx,qy,qz)
+local zr=64*8+prsp
+local z1=zr/(view.z-z1+prsp)
+local z2=zr/(view.z-z2+prsp)
+line(x1*z1+view.x,y1*z1+view.y,x2*z2+view.x,y2*z2+view.y,c)
+end
+
 function rolzsort(v,qx,qy,qz)
 local s={}
 tmap(v,function(v)
@@ -1466,14 +1493,25 @@ quicksort(v,1,#v)
 return v,s
 end
 
-function vradq(vw,r)
+function vradq(r,s)
 return
-radq((vw.x)*r,{0,1,0})
-,radq((vw.y)*r,{1,0,0})
-,radq((vw.z)*r,{0,0,1})
+radq((r.x)*s,{0,1,0})
+,radq((r.y)*s,{1,0,0})
+,radq((r.z)*s,{0,0,1})
 end
 
 
+--function vrolq(x,y,z,qx,qy,qz)
+--return rolq(qx[1],qx[2],qx[3],qx[4],
+--rolq(qy[1],qy[2],qy[3],qy[4],
+--rolq(qz[1],qz[2],qz[3],qz[4],0,v[1],v[2],v[3])
+--))
+--end
+--function vrolq(x,y,z,qx,qy,qz)
+--return rolq(rolq(rolq({0,x,y,z},qz),qy),qx)
+--end
+
+sss=0
 function vrolq(x,y,z,qx,qy,qz)
 return rolq(rolq(rolq({0,x,y,z},qx),qy),qz)
 end
@@ -1512,14 +1550,14 @@ function rtfp(r)
 return rfp[mid(1,8,flr(r*100)-8)]
 end
 function light(c,r)
-local s=mid(r,0,1)
-
+--local s=mid(r,0,1)
+local s=mid(r*2,0,2)
 --dbg(r..' ' ..flr(s+1)*4 .. ' '..mid(1,8,flr(band(s,0x.ffff)*7)+1))
 --local s=1-mid(r*2,0,1)
 --local s=mid(r*4,0,3)
 --dbg('q '..c..' '..s..' '..band(s,0x.ffff)*7+1)
 --return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
-return band(lshr(c,flr(s+1)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
+return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
 end
 
 function dot(v1,v2)
@@ -1633,6 +1671,7 @@ normalize(vtopsort(tr[1],tr[2],tr[3]),1)
 ,normalize(l,1)
 ))
 
+--return (x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)<0 and i or bnot(i)
 if cull(tr[1][1],tr[1][2],tr[2][1],tr[2][2],tr[3][1],tr[3][2],-1)>0 then
 return
 end
@@ -1646,6 +1685,7 @@ local z1,z2,z3
 --local z1,z2,z3=zr/tr[1][3],zr/tr[2][3],zr/tr[3][3]
 --local z1,z2,z3=tr[1][3]*zr,tr[2][3]*zr,tr[3][3]*zr
 --local z1,z2,z3=zr,zr,zr
+if eface then
 p01_triangle_163
 (tr[1][1]*z1+view.x
 ,tr[1][2]*z1+view.y
@@ -1653,6 +1693,16 @@ p01_triangle_163
 ,tr[2][2]*z2+view.y
 ,tr[3][1]*z3+view.x
 ,tr[3][2]*z3+view.y,c,fp)
+else
+line(tr[1][1]*z1+view.x
+,tr[1][2]*z1+view.y
+,tr[2][1]*z2+view.x
+,tr[2][2]*z2+view.y,c)
+line(tr[3][1]*z3+view.x
+,tr[3][2]*z3+view.y)
+line(tr[1][1]*z1+view.x
+,tr[1][2]*z1+view.y)
+end
 --dbg(tr[1][2]*z1+view.x)
 end
 --dbg(join({tr[1][1],tr[2][1],tr[3][1]}, "--"))
@@ -1664,37 +1714,6 @@ return vs
 end
 -->8
 --sort	
---function pivot(a,i,j)
---local k=i+1
---while k<=j and a[i][4]==a[k][4] do k+=1 end
---if(k>j)return -1
---if(a[i][4]>=a[k][4])return i
---return k
---end
---
---function partition(a,i,j,x)
---local l,r=i,j
---while l<=r do
---while l<=j and a[l][4]<x do l+=1 end
---while r>=i and a[r][4]>=x do r-=1 end
---if(l>r)break
---a[l],a[r]=a[r],a[l]
---l+=1
---r-=1
---end
---return l
---end
---
---function quicksort(a,i,j)
---if(i==j)return
---local p=pivot(a,i,j)
---if p!=-1 then
-----print(join({i,j,#a,p,a[p]},' '))
---local k=partition(a,i,j,a[p][4])
---quicksort(a,i,k-1)
---quicksort(a,k,j)
---end
---end
 
 function quicksort(v,s,e)
 local i,p
@@ -1714,10 +1733,7 @@ quicksort(v,p+1,e)
 end
 
 function vtopsort(v1,v2,v3)
---if(v1[2]>v2[2]) v1[1],v1[2],v1[3]=v2[1],v2[2],v2[3]
---if(v2[2]>v3[2]) v2[1],v2[2],v2[3]=v3[1],v3[2],v3[3]
---if(v3[2]>v1[2]) v3[1],v3[2],v3[3]=v1[1],v1[2],v1[3]
---dbg(v1[2])
+
 if(v1[2]<v2[2]) v1,v2={v2[1],v2[2],v2[3]},{v1[1],v1[2],v1[3]}
 if(v2[2]<v3[2]) v2,v3={v3[1],v3[2],v3[3]},{v2[1],v2[2],v2[3]}
 if(v3[2]<v1[2]) v3,v1={v1[1],v1[2],v1[3]},{v3[1],v3[2],v3[3]}
@@ -1982,14 +1998,14 @@ c98ac48a000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-668a96aa0000000000000000000000000000000043834b8343834b83000000000000000000000000000000000000000000000000000000000000000000000000
-964a94890000000000000000000000000000000063836b8300000000000000000000000000000000000000000000000000000000000000000000000000000000
-668896ac0000000000000000000000000000000073757b7500000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000d373db7300000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000d353db5300000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000073537b5300000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000063456b4500000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000043434b4300000000000000000000000000000000000000000000000000000000000000000000000000000000
+668a96aa0000000000000000000000000000000043834b8343834b83000000008cd7cad746d646c685584c5a0000000000000000000000000000000000000000
+964a94890000000000000000000000000000000063836b83000000000000000088d7c6d74ad64ac6295a69590000000000000000000000000000000000000000
+668896ac0000000000000000000000000000000073757b75000000000000000084d746d78cd68cc6695a695a0000000000000000000000000000000000000000
+0000000000000000000000000000000000000000d373db73000000000000000088d74ad78cd68cd6cc5ae95a0000000000000000000000000000000000000000
+0000000000000000000000000000000000000000d353db5300000000000000008cd78cc688d688d6a95a00000000000000000000000000000000000000000000
+000000000000000000000000000000000000000073537b530000000000000000cad6cac685568556000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000063456b450000000000000000c6d6c6c6a2566256000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000043434b43000000000000000084d684c685588558000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
