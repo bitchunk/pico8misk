@@ -462,7 +462,7 @@ d st spr_d 0
 k st load_k 0
 m us nil 0
 ]],{t='exit form load: x',p='32 1 3 7'})
-end)menuitem(3,'scale test',function(v,i)
+end)menuitem(3,'play',function(v,i)
 scenesbat([[
 d st spr_d 0
 k st load_k 0
@@ -488,7 +488,8 @@ arad=atan2(1/3,1)
 vdist=4
 prsp=4
 xyz=htbl[[x y z]]
-rada=htbl[[{0 1 0}{1 0 0}{0 0 1}]]
+--rada=htbl[[{0 1 0}{1 0 0}{0 0 1}]]
+rada=htbl[[{1 0 0}{0 1 0}{0 0 1}]]
 eface=true
 
 sizc=htbl[[15=3; 6=1; 1=0; 0=-1; 10=1;]]
@@ -499,9 +500,9 @@ viewb=mkrect[[64 64 128 128]]
 --cam=mkrect[[64 64 128 128]]
 rview=mkrect[[0 0 128 128]]
 opos=mkrect[[0 0 0 0]]
-oposb=mkrect[[0 0 0 0]]
+--oposb=mkrect[[0 0 0 0]]
 orot=mkrect[[0 0 0 0]]
-orotb=mkrect[[0 0 0 0]]
+--orotb=mkrect[[0 0 0 0]]
 oang=mkrect[[0 0 0 0]]
 oscl=mkrect[[64 64 1 1]]
 lpos=mkrect[[1 -5 0 0]]
@@ -522,15 +523,18 @@ vcol=10
 bgcol=5
 --cam.z=64
 opos.z=0
-oposb.z=0
+oposb=cat({},opos)
+--oposb.z=0
 orot.z=0
-orotb.z=0
+orotb=cat({},orot)
+--orotb.z=0
 oang.z=0
 rview.z=0
 --cat(view,htbl[[r{x=0;y=0;z=0;}]])
 ldps=3
 --vtxsel={1}
 vtxsl=1
+vtxslb=1
 vtxsll=0
 vtxslf=1
 dblwait=0
@@ -543,6 +547,7 @@ dragstart(lpos,1)
 
 rothlf=32
 rotful=64
+scsize=128
 
 local obj={}
 obj.rt=orot
@@ -594,14 +599,25 @@ end)
 --1:
 caller={
 def_d=function(o)
+if not inrng(mo.x,8,120) or not inrng(mo.y,8,104) or xtzr or ytzr then
+cls((bgcol+15)%16)
+clip(8,8,112,104)
+rectfill(0,0,127,127,bgcol)
+clip()
+else
 cls(bgcol)
+end
 local p=0
 
 rectfill(64,64,64,64,7)
 
 local msk=0xffff
-local qx,qy,qz=vradq(orot,1/128)
-local rx,ry,rz=vradq(orotb,1/128)
+--local qx,qy,qz=vradq({orot.x,orot.y,orot.z},1/128)
+--local rx,ry,rz=vradq({rview.x,rview.y,rview.z},1/128)
+--local qx,qy,qz=vradq({orot.x,orot.y,orot.z,rview.x,rview.y,rview.z},1/128)
+local qv=vradq({rview.x,rview.y,rview.z,orot.x,orot.y,orot.z},1/128)
+--local qx,qy,qz=vradq(orot,1/128)
+--local rx,ry,rz=vradq(orotb,1/128)
 local zr=8*64+prsp
 local wz=view.z+prsp
 --local zr=64/wz
@@ -619,7 +635,8 @@ local x=0
 --local y=genab.z and opos.y*8*zr or i*8*zr
 local y=genab.z and opos.y or i
 local z=genab.z and i-opos.y+opos.z or opos.z
-line3(7+x,y,z,-8+x,y,z,qx,qy,qz,c)
+line3(7+x,y,z,-8+x,y,z,qv,c)
+rectfill()
 --local q,x1,y1,z1=rots(7+x,y,z,qx,qy,qz)
 --local q,x2,y2,z2=rots(-8+x,y,z,qx,qy,qz)
 --local z1=zr/(wz-z1)
@@ -635,7 +652,7 @@ for i=max(opos.x-2,-8),min(opos.x+2,7) do
 local x=genab.z and opos.x or i
 local y=0
 local z=genab.z and i-opos.x+opos.z or opos.z
-line3(x,7+y,z,x,-8+y,z,qx,qy,qz,c)
+line3(x,7+y,z,x,-8+y,z,qv,c)
 
 --local q,x1,y1,z1=rots(x,7+y,z,qx,qy,qz)
 --local q,x2,y2,z2=rots(x,-8+y,z,qx,qy,qz)
@@ -659,8 +676,7 @@ local z=genab.x and 0 or 0
 --local z1=zr/(wz-z1)
 --local z2=zr/(wz-z2)
 --line(x1*z1+view.x,y1*z1+view.y,x2*z2+view.x,y2*z2+view.y,c)
-line3(x,y,7+z,x,y,-8+z,qx,qy,qz,c)
-
+line3(x,y,7+z,x,y,-8+z,qv,c)
 end
 end
 
@@ -668,55 +684,63 @@ fillp(not genab.x and msk)
 --local q,x1,y1,z1=rots(56*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
 --local q,x2,y2,z2=rots(-64*zr,opos.y*8*zr,opos.z*8*zr,qx,qy,qz)
 --line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x28)
-line3(7,opos.y,opos.z,-8,opos.y,opos.z,qx,qy,qz,0x28)
+local l1={line3(7,opos.y,opos.z,-8,opos.y,opos.z,qv,0x28)}
+--rectfill(x2-1,y2-1,x2+1,y2+1,0x28)
 
 --local q,x1,y1,z=rots(opos.x*8*zr,56*zr,opos.z*8*zr,qx,qy,qz)
 --local q,x2,y2,z=rots(opos.x*8*zr,-64*zr,opos.z*8*zr,qx,qy,qz)
 fillp(not genab.y and msk)
 --line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x3b)
-line3(opos.x,7,opos.z,opos.x,-8,opos.z,qx,qy,qz,0x3b)
+local l2={line3(opos.x,7,opos.z,opos.x,-8,opos.z,qv,0x3b)}
+--rectfill(x2-1,y2-1,x2+1,y2+1,0x3b)
 
 fillp(not genab.z and msk)
 --local q,x1,y1,z=rots(opos.x*8*zr,opos.y*8*zr,56*zr,qx,qy,qz)
 --local q,x2,y2,z=rots(opos.x*8*zr,opos.y*8*zr,-64*zr,qx,qy,qz)
 --line(x1+view.x,y1+view.y,x2+view.x,y2+view.y,0x1c)
-line3(opos.x,opos.y,7,opos.x,opos.y,-8,qx,qy,qz,0x1c)
+local l3={line3(opos.x,opos.y,7,opos.x,opos.y,-8,qv,0x1c)}
+--rectfill(x2-1,y2-1,x2+1,y2+1,0x1c)
 fillp()
 
 
 fillp()
 --local q,x1,y1,z1=rots(lpos.x*zr,lpos.y*zr,lpos.z*zr,qx,qy,qz)
-local q,x1,y1,z1=vrolq({lpos.x*zr,lpos.y*zr,lpos.z*zr},qx,qy,qz)
+local q,x1,y1,z1=vrolq({0,-lpos.x/8,-lpos.y/8,-lpos.z/8},qv)
 --zr=8*64/view.z
-zr=8*64+prsp
-
+--zr=8*64+prsp
+--local z1=zr/(view.z-z1+prsp)
+--local z2=zr/(view.z-z2+prsp)
 --**line draw mode*
 
 local pre
-tmap(cat({{lpos.x/8,lpos.y/8,lpos.z/8,7}},objdraw(obj)),function(v,i)
+local vt=cat({{x1,y1,z1,7},l1,l2,l3},objdraw(obj))
+--local vt=cat({{lpos.x,lpos.y,lpos.z,7},l1,l2,l3},objdraw(obj))
+--quicksort(vt,1,#vt)
+tmap(vt,function(v,i)
 --local pfnc=inrng(v.i,vtxsl,vtxslf) and circfill or circ
 
 --v[1]=v[1]*8*zr+view.x
 --v[2]=v[2]*8*zr+view.y
 --if inrng(v.i,vtxsl,vtxslf)  then
 
-if v.i then
-
---**vertex draw**
 local z1=zr/(view.z-v[3]+prsp)
-local z2=zr/(view.z-pre[3]+prsp)
+if v.i then
+--**vertex draw**
 fillp()
 if inrng(v.i,vtxsl,vtxsl+vtxsll) then
 circfill(v[1]*z1+view.x,v[2]*z1+view.y,2,v.i==vtxsl and v[4] or 11)
 end
-if v.i==#vtxs then
+if v.i==#vtxs and #vtxs>1 then
+local z2=zr/(view.z-pre[3]+prsp)
 line(v[1]*z1+view.x,v[2]*z1+view.y,pre[1]*z2+view.x,pre[2]*z2+view.y,
 (v.i<3 or v.i%2==0) and 11 or 12)
 end
 circ(v[1]*z1+view.x,v[2]*z1+view.y,2,v.t and 12 or v[4])
 
-else
+elseif v[4]==7 then
 spr(4,v[1]*z1+view.x-3,v[2]*z1+view.y-3)
+else
+rectfill(v[1]-1,v[2]-1,v[1]+1,v[2]+1,v[4])
 --fillp(0x5a5a.8)
 --circfill(v[1]*zr+view.x,v[2]*zr+view.y,2,v[4])
 --fillp()
@@ -727,13 +751,13 @@ end)
 
 v=cubr
 pfnc=circ
---local q,vx,vy,vz=spread(rolq(rolq(rolq({0,opos.x,opos.y,opos.z},qx),qy),qz))
---local q,vx,vy,vz=spread(vrolq(opos.x,opos.y,opos.z,qx,qy,qz))
-local q,vx,vy,vz=vrolq({opos.x,opos.y,opos.z},qx,qy,qz)
---drawo(v,opos.x-1,opos.y-1,opos.z-1)
+--local q,x1,y1,z1=vrolq({lpos.x/8,lpos.y/8,lpos.z/8},qx,qy,qz)
+--local z1=zr/(view.z-z1+prsp)
+--spr(4,x1*z1+view.x-3,y1*z1+view.y-3)
+
+local q,vx,vy,vz=vrolq({0,opos.x,opos.y,opos.z},qv)
 local z1=zr/(view.z-vz+prsp)
 circ(vx*z1+view.x,vy*z1+view.y,3,15)
---drawp(vx*z1+view.x,vy*z1+view.y,vz*z1+view.z,15,3)
 
 rectfill(0,120,127,127,0)
 for x=0,15 do
@@ -747,8 +771,12 @@ pset(1,121,5)
 pal(7,vcol)
 rect(vcol*8,120,vcol*8+8,127,pspal[vcol])
 pal()
-eachpal('567bc$',(#vtxs<3 or vtxsl%2==1) and 'b0bb0' or '0cc0c')
+eachpal('56dbc$',(#vtxs<3 or vtxsl%2==1) and 'b0bb0' or '0cc0c')
 spr(spid,mo.x-3,mo.y-3)
+local v=vtxs[vtxsl] or vtxs[vtxsl-1]
+if v then
+outline(v.i,join({mo.x,mo.y+5,5,7},' '))
+end
 pal()
 
 end
@@ -760,14 +788,28 @@ elseif mo.lut then
 chold=false
 end
 
-
+if keytrg.… then
+vtxsl,vtxslb=vtxslb,vtxsl
+end
 if mo.r and mo.lt and #vtxs>0 then
+if keystate[' '] then
+--select vtx on opos
+--local m={}
+for i,v in pairs(vtxs) do
+if vtxsl~=v.i and opos.x==v[1] and opos.y==v[2] and opos.z==v[3] then
+vtxsl,vtxslb=v.i,vtxsl
+break
+--add(m,v.i)
+end
+end
+else
 local v=vtxs[min(vtxsl,#vtxs)]
 opos.z=v[3]
 opos.ud(v[1],v[2])
-vtxsl=#vtxs+1
+vtxsb=vtxsl
+vtxsl,vtxslb=#vtxs+1,vtxsl
 vtxsll=0
-
+end
 end
 
 if mo.r and mo.lt then
@@ -803,31 +845,35 @@ scale=1
 if opos.x+opos.y+opos.z~=oposb.x+oposb.y+oposb.z then
 dblwait=12
 end
---**[cancel] drag cursor**
-cat(oposb,opos)
+
 end
 end
 
 if keytrg.█ then
 if vtxsl==#vtxs then
-vtxsl=#vtxs+1
+vtxsl,vtxslb=#vtxs+1,vtxsl
 vtxsll=0
 else
-vtxsl=#vtxs
+vtxsl,vtxslb=#vtxs,vtxsl
 vtxsll=-#vtxs+1
+local v=vtxs[vtxsl]
+if v then
+opos.ud(v[1],v[2]).z=v[3]
 end
 end
-if mo.r and keytrg[','] or keytrg['<'] then
-		vtxsll=min(vtxsll-1,vtxsl-1)
+end
+if mo.r and keytrg['1'] or keytrg['!'] then
+		vtxsll=mid(vtxsll-1,vtxsl-1,-#vtxs)
  	vtxsl=mid(vtxsl,1,#vtxs)
-elseif keytrg[','] then
+elseif keytrg['1'] then
 		vtxsl=max(vtxsl-1,1)
 		vtxsll=0
 end
-if mo.r and keytrg['.'] or keytrg['>'] then
-	vtxsll=min(vtxsll+1,#vtxs-vtxsl)
+if mo.r and keytrg['2'] or keytrg['"'] then
+	vtxsll=mid(vtxsll+1,#vtxs-vtxsl,0)
 	vtxsl=mid(vtxsl,1,#vtxs)
-elseif keytrg['.'] then
+--	vdmp({vtxsll,vtxsl})
+elseif keytrg['2'] then
 		vtxsl=min(vtxsl+1,#vtxs+1)
 	 vtxsll=0
 end
@@ -838,11 +884,17 @@ if mo.ldb then
 	add(vtxsb,cat({},v))
 	end)
 	local v={flr(opos.x),flr(opos.y),flr(opos.z),vcol}
-	if vtxsll~=0 or vtxsl<=#vtxs then
+	if keystate[' '] then
+	vtxs=tmap(cat(cat(slice(vtxs,1,vtxsl),{v}),slice(vtxs,vtxsl+1)),function(v,i)
+	v.i=i
+	end)
+	vtxsl+=1
+	
+
+	elseif vtxsll~=0 or vtxsl<=#vtxs then
 	 local st=max(1,min(vtxsl+vtxsll,vtxsl))
 	 local en=min(#vtxs,max(vtxsl+vtxsll,vtxsl))
 		local ismv=v[1]~=vtxs[en][1] or v[2]~=vtxs[en][2] or v[3]~=vtxs[en][3]
---		vdmp({v,vtxs[en],ismv})
 		for i=st,en do
 		ecxy('1 0 3 1',function(a)
 		vtxs[i][a]+=v[a]-vtxs[en][a]
@@ -855,7 +907,7 @@ if mo.ldb then
 	add(vtxs,v)
 
 	v.i=#vtxs
-	vtxsl=#vtxs+1
+	vtxsl,vtxslb=#vtxs+1,vtxsl
 	vtxslf=vtxsl
 	end
 end
@@ -864,10 +916,19 @@ vtxsb={}
 tmap(vtxs,function(v)
 add(vtxsb,cat({},v))
 end)
-del(vtxs,vtxs[vtxsl<#vtxs+1 and vtxsl or #vtxs])
-vtxs=cat({},vtxs)
-vtxsl=#vtxs+1
-vtxsll=0
+
+	if keystate[' '] then
+	vtxs[vtxsl]=nil
+	vtxsl=max(1,vtxsl-1)
+	else
+	del(vtxs,vtxs[vtxsl<#vtxs+1 and vtxsl or #vtxs])
+	vtxs=cat({},vtxs)
+	vtxsl,vtxslb=#vtxs+1,vtxsl
+	vtxsll=0
+	end
+	tmap(vtxs,function(v,i)
+	v.i=i
+	end)
 end
 end
 ,def_k=function(o)
@@ -886,17 +947,17 @@ end)
 end
 cat(genab,gedef)
 local x,y
-=cos(orot.x%rothlf/rothlf)>0
-,cos(orot.y%rothlf/rothlf)>0
+=cos(orot.y%rothlf/rothlf)>0
+,cos(orot.x%rothlf/rothlf)>0
 --=inrng(sgn(orot.x)*orot.x%64,-16,16)
 --,inrng(sgn(orot.y)*orot.y%64,-16,16)
 genab.x=x and 1 or not y and -1
 genab.y=y or not x and y
 genab.z=not(genab.y and genab.x)
-if keystate['x'] or keystate['c'] or keystate['z'] then
-genab.x=keystate['x']
-genab.y=keystate['c']
-genab.z=keystate['z']
+if keystate.x or keystate.c or keystate.z then
+genab.x=keystate.x
+genab.y=keystate.c
+genab.z=keystate.z
 end
 spid=0
 
@@ -905,6 +966,9 @@ dragstart(view)
 chold=true
 elseif mo.lut then
 chold=false
+--**[cancel] drag cursor**
+cat(oposb,opos)
+
 end
 
 
@@ -918,87 +982,76 @@ end
 
 if keystate[' '] and mo.l then
 --**drag view**
-sss+=1.01
+--sss+=1.01
 spid=1
-local x,y=dragrot(view,{x=0,y=0,z=0})
+--local x,y=dragrot(view,{x=0,y=0,z=0})
+local x,y=dragdist(view,{x=0,y=0,z=0})
 view.ud(x,y)
 else
 --opos cursor control
 end
 dblwait=max(0,dblwait-1)
 
+--local xr,yr=not inrng(mo.x,8,120),not inrng(mo.y,8,104)
+--xtzr=(xtzr and not yr) or xr
+--ytzr=(ytzr and not yr) or yr
 
 if mo.rt then
+xtzr,ytzr=not inrng(mo.x,8,120),not inrng(mo.y,8,104)
 chold=true
-ytzr=not inrng(mo.y,24,104)
-xtzr=not inrng(mo.x,24,104)
 cat(viewb,view)
-
-elseif mo.rut then
-ytzr=false
-xtzr=false
-cat(orotb,orot)
-end
-
-if mo.r and chold then
 if mo.y>120 then
 bgcol=flr(min(mo.x/8,15))
 chold=false
 return
 end
+
+elseif mo.rut then
+cat(orotb,orot)
+end
+
+if mo.r and chold then
+
 --**rotate view**
 spid=2
 dragstart(orot)
-dragstart(lpos)
-local x,y,zx,zy=dragrot(orot,{x=0,y=0,z=0})
---local x,y,z=dragrot(orot,{x=opos.x,y=opos.y,z=opos.z})
+dragstart(rview)
+local y,x,zy,zx=dragrot(orot,{x=0,y=0,z=0})
+--local x,y,zx,zy=dragrot(orot,{x=0,y=0,z=0})
 --z=orot.z
 local z=orot.z
 if ytzr then
 spid=3
-z=zx
-x=orot.x
+z=zy
+y=orot.y
 end
 if xtzr then
 spid=3
-z=zy
-y=orot.y
+z=zx
+x=orot.x
 end
 
 if keystate[' '] then
 --**rot z and fix rot x-y **
 local zr=64/view.z
-local qx,qy,qz=vradq({
-x=opos.x*8
-,y=opos.y*8
-,z=opos.z*8},1/rotful)
-local q,x1,y1,z1=vrolq({view.x-64,view.y-64,view.z-64},qx,qy,qz)
+--local qv=vradq({opos.x*8,opos.y*8,opos.z*8},1/rotful)
+--local q,x1,y1,z1=vrolq({0,view.x-64,view.y-64,view.z-64},qv)
+local x,y=dragrot(rview,{x=0,y=0,z=0})
+
+--lpos.ud(x,y)
+rview.ud(x,y)
 
 
-local x,y=dragrot(lpos,{x=0,y=0,z=0})
-
-lpos.ud(x,y)
---view.ud(x1,y1).z=z1
---view.ud(x1+64,y1+64)
---view.z=z1+64
-
---local x,y=dragrot(view,{x=0,y=0,z=0})
---local x,y,z=dragrot(orot,{x=opos.x,y=opos.y,z=opos.z})
-
---view.ud(x,y)
-
---z=x
---x,y=orot.x,orot.y
 end
 --**rot view with one axis 
 if keystate.x then
-x,y,z=orot.x,x,orot.z
+x,y,z=y,orot.y,orot.z
 end
 if keystate.c then
-x,y,z=x,orot.y,orot.z
+x,y,z=orot.x,y,orot.z
 end
 if keystate.z then
-x,y,z=orot.y,orot.y,x+y
+x,y,z=orot.x,orot.y,x+y
 end
 
 if mo.l then
@@ -1014,25 +1067,38 @@ end
 --,inrng(y,128,-128) and y or -sgn(y)*128)
 
 --end
+else
+ytzr=false
+xtzr=false
 end
 
 if mo.mt then
 vcol=vtxs[vtxsl] and vtxs[vtxsl][4] or vcol
+dragstart(lpos)
 end
 
-if keystate[' '] and mo.r then
+if mo.m then
+local x,y=dragdist(lpos,{x=0,y=0,z=0})
+if keystate[' '] then
 lpos.z-=mo.w*2
-elseif keystate[' '] then
-mo.ldb=false
-mo.rdb=false
+lpos.z=x+y
+else
+lpos.ud(x,y)
+end
+end
+
+if not mo.m then
+if keystate[' '] then
+--mo.ldb=false
+--mo.rdb=false
+--dbg(mo.ldb)
 view.z-=mo.w
 else
 --vcol=(vcol+16+mo.w)%16
-opos.z=mid(opos.z+mo.w,-8,7)
+opos.z=mid(opos.z+amid(mo.w,1),-8,7)
 --orot.z-=mo.w*2
 end
-
-
+end
 
 if keystate['0'] then
 chold=false
@@ -1059,6 +1125,10 @@ end
 if keytrg["\t"] then
 eface=not eface
 end
+
+--obj.rt=orot
+--obj.vt=vtxs
+
 end
 ,sc_d=function(o)
 cls(bgcol)
@@ -1094,6 +1164,7 @@ k st edt_k 0
 ]]
 return 1
 end
+
 end
 ,spr_d=function(o)
 cls()
@@ -1255,9 +1326,7 @@ dbg(join({rview.x,rview.y,rview.z},' '))
 dbg('l:'..join({lpos.x,lpos.y,lpos.z},' '))
 --dbg('o:'..join({orot.x,orot.y,orot.z},' '))
 dbg(stat(1))
-dbg(sss)
-dbg(mo.x)
-dbg(mo.y)
+dbg(vtxsll)
 
 dbg_print()
 end
@@ -1335,30 +1404,34 @@ end
 end
 
 function dragrot(vw,rv)
-local qx,qy,qz=vradq({x=rv.x,y=rv.y,z=rv.z},1/rotful,rx,ry,rz)
---local x,y,z=mo.x-mo.sx*sgn(rv.x),mo.y-mo.sy*sgn(rv.y),64
+--local qx,qy,qz=vradq({x=rv.x,y=rv.y,z=rv.z},1/rotful,rx,ry,rz)
+local qv=vradq({rv.x,rv.y,rv.z},1/rotful)
 local x,y,zx,zy=mo.x-mo.sx,mo.y-mo.sy,mo.x-mo.sx,mo.y-mo.sy
-local q,x,y,zx=vrolq({x,y,zx},qx,qy,qz,rx,ry,rz)
+local q,x,y,zx=vrolq({0,x,y,zx},qv)
 return
- x/128*rotful+vw.stx
-,y/128*rotful+vw.sty
-,zx/128*rotful+vw.stz
-,zy/128*rotful+vw.stz
+ x/scsize*rotful+vw.sty
+,y/scsize*rotful+vw.stx
+,zx/scsize*rotful+vw.stz
+,zy/scsize*rotful+vw.stz
 end
 
 function dragdist(vw,rv)
 
-local qx,qy,qz=vradq({x=rv.x,y=rv.y,z=rv.z},1/128)
+--local qx,qy,qz=vradq({x=rv.x,y=rv.y,z=rv.z},1/128)
+local qv=vradq({rv.x,rv.y,rv.z},1/scsize)
 local x,y,z=mo.x-mo.sx,mo.y-mo.sy,64
 return
- x/scale*rvrsa('x')+(genab.x and vw.stx or vw.stz)
-,y/scale*rvrsa('y')+(genab.y and vw.sty or vw.stz)
+ x/scale+(genab.x and vw.stx or vw.stz)
+,y/scale+(genab.y and vw.sty or vw.stz)
+-- x/scale*rvrsa('x')+(genab.x and vw.stx or vw.stz)
+--,y/scale*rvrsa('y')+(genab.y and vw.sty or vw.stz)
+
 -- (x/scale+(genab.x and vw.stx or -vw.stz))*rvrsa('x')
 --,(y/scale+(genab.y and vw.sty or -vw.stz))*rvrsa('y')
 --,z/scale+vw.stz
 end
 function rvrsa(a)
-return sgn((a=='y' and cos or sin)((orot[a]-16)/128))
+return sgn((a=='y' and cos or sin)((orot[a]-16)/scsize))
 end
 
 --btnstat={}
@@ -1440,6 +1513,87 @@ end
 return cr,sr
 end
 -->8
+--draw
+
+function line3(x1,y1,z1,x2,y2,z2,qv,c)
+--function line3(x1,y1,z1,x2,y2,z2,qx,qy,qz,c)
+--local q,x1,y1,z1=rots(x1,y1,z1,qx,qy,qz)
+--local q,x2,y2,z2=rots(x2,y2,z2,qx,qy,qz)
+--local q,x1,y1,z1=vrolq({0,x1,y1,z1},{qx,qy,qz})
+--local q,x2,y2,z2=vrolq({0,x2,y2,z2},{qx,qy,qz})
+local q,x1,y1,z1=vrolq({0,x1,y1,z1},qv)
+local q,x2,y2,z2=vrolq({0,x2,y2,z2},qv)
+local zr=64*8+prsp
+local z1=zr/(view.z-z1+prsp)
+local z2=zr/(view.z-z2+prsp)
+local x1,y1,x2,y2=x1*z1+view.x,y1*z1+view.y,x2*z2+view.x,y2*z2+view.y
+line(x1,y1,x2,y2,c)
+--return x1,y1,z1,x2,y2,z2
+return x2,y2,z2,c
+end
+
+function vradq(v,s)
+return tmap(v,function(a,i)
+i=(i-1)%3+1
+return radq(a*s,normalize(rada[i],1))
+end)
+--return spread(tmap(cat({},xyz),function(a,i)
+--i=normalize(rada[i],1)
+--return radq(v[a]*s,i)
+--end))
+
+end
+
+--sss=0
+--function vrolq(x,y,z,qx,qy,qz)
+--function vrolq(v,qx,qy,qz)
+function vrolq(v,q)
+--local rx,ry,rz=vradq(orotb,1/128)
+local v1,v2,v3,v4=v[1],v[2],v[3],v[4]
+for i,r in pairs(q) do
+v1,v2,v3,v4=rolq(r[1],r[2],r[3],r[4],v1,v2,v3,v4)
+end
+return v1,v2,v3,v4
+--return
+--rolq(qx[1],qx[2],qx[3],qx[4],
+--rolq(qz[1],qz[2],qz[3],qz[4],
+--rolq(qy[1],qy[2],qy[3],qy[4],
+--0,v[1],v[2],v[3])
+--))
+--)))
+--return rolq(rolq(rolq({0,x,y,z},qx),qy),qz)
+end
+
+-->8
+--for 3d render
+
+--sort	
+function quicksort(v,s,e)
+local i,p
+if(s>=e)return
+p=s
+for i=s+1,e do
+if v[i][4]<v[s][4] then
+--if v[i].s>v[s].s then
+p+=1
+v[p],v[i]=v[i],v[p]
+end
+end
+v[s],v[p]=v[p],v[s]
+
+quicksort(v,s,p-1)
+quicksort(v,p+1,e)
+end
+
+function vtopsort(v1,v2,v3)
+
+if(v1[2]<v2[2]) v1,v2={v2[1],v2[2],v2[3]},{v1[1],v1[2],v1[3]}
+if(v2[2]<v3[2]) v2,v3={v3[1],v3[2],v3[3]},{v2[1],v2[2],v2[3]}
+if(v3[2]<v1[2]) v3,v1={v1[1],v1[2],v1[3]},{v3[1],v3[2],v3[3]}
+--dbg(v1[2])
+return v1,v2,v3
+end
+
 --quaternion
 function radq(r,v)
 --r (rad) rotation
@@ -1447,17 +1601,8 @@ function radq(r,v)
 local s=sin(r)
 return {cos(r),v[1]*s,v[2]*s,v[3]*s}
 end
---
---function qprd(q,r)
---return
---{q[1]*r[1]-q[2]*r[2]-q[3]*r[3]-q[4]*r[4]
---,q[1]*r[2]+q[2]*r[1]+q[3]*r[4]-q[4]*r[3]
---,q[1]*r[3]+q[3]*r[1]+q[4]*r[2]-q[2]*r[4]
---,q[1]*r[4]+q[4]*r[1]+q[2]*r[3]-q[3]*r[2]}
---end
---function rolq(q,r)
---return qprd(qprd(r,q),{r[1],-r[2],-r[3],-r[4]})
---end
+
+
 function qprd(r1,r2,r3,r4,q1,q2,q3,q4)
 return
  q1*r1-q2*r2-q3*r3-q4*r4
@@ -1480,117 +1625,6 @@ end
 
 
 
-
-function line3(x1,y1,z1,x2,y2,z2,qx,qy,qz,c)
---local q,x1,y1,z1=rots(x1,y1,z1,qx,qy,qz)
---local q,x2,y2,z2=rots(x2,y2,z2,qx,qy,qz)
-local q,x1,y1,z1=vrolq({x1,y1,z1},qx,qy,qz)
-local q,x2,y2,z2=vrolq({x2,y2,z2},qx,qy,qz)
-local zr=64*8+prsp
-local z1=zr/(view.z-z1+prsp)
-local z2=zr/(view.z-z2+prsp)
-line(x1*z1+view.x,y1*z1+view.y,x2*z2+view.x,y2*z2+view.y,c)
-end
-
-function rolzsort(v,qx,qy,qz)
-local s={}
-tmap(v,function(v)
-local x,y,z,p=spread(v)
---local q,vx,vy,vz=spread(rolq(rolq({0,x,y,z},qx),qy))
-local q,vx,vy,vz=spread(rolq(rolq(rolq({0,x,y,z},qx),qy),qz))
-add(s,vz)
-return {vx,vy,vz,p,q,i=v.i}
-end)
-quicksort(v,1,#v)
-
-return v,s
-end
-
-function vradq(v,s)
-
-return spread(tmap(cat({},xyz),function(a,i)
-i=normalize(rada[i],1)
---i=normalize({opos.x+rada[i][1],opos.y+rada[i][2],opos.z+rada[i][3]},1)
-return radq(v[a]*s,i)
---return radq(v[a]*s,{i[1]-opos.y/8,i[2]-opos.x/8,i[3]-opos.z/8})
---return radq(v[a]*s,{i==1 and opos.x or 0,i==2 and opos.y or 0,i==3 and opos.z or 0})
-end))
---return
---radq((r.x)*s,{0,1,0})
---,radq((r.y)*s,{1,0,0})
---,radq((r.z)*s,{0,0,1})
-end
-
-
---function vrolq(x,y,z,qx,qy,qz)
---return rolq(qx[1],qx[2],qx[3],qx[4],
---rolq(qy[1],qy[2],qy[3],qy[4],
---rolq(qz[1],qz[2],qz[3],qz[4],0,v[1],v[2],v[3])
---))
---end
---function vrolq(x,y,z,qx,qy,qz)
---return rolq(rolq(rolq({0,x,y,z},qz),qy),qx)
---end
-
-sss=0
---function vrolq(x,y,z,qx,qy,qz)
-function vrolq(v,qx,qy,qz)
-local rx,ry,rz=vradq(orotb,1/128)
-return
-rolq(qz[1],qz[2],qz[3],qz[4],
-rolq(qy[1],qy[2],qy[3],qy[4],
-rolq(qx[1],qx[2],qx[3],qx[4],
---rolq(rz[1],rz[2],rz[3],rz[4],
---rolq(ry[1],ry[2],ry[3],ry[4],
---rolq(rx[1],rx[2],rx[3],rx[4],
-0,v[1],v[2],v[3])
-))
---)))
---return rolq(rolq(rolq({0,x,y,z},qx),qy),qz)
-end
-
---function rots(x,y,z,qx,qy,qz)
-----return x,y,z,q
---return spread(rolq(rolq(rolq({x,y,z,0},qx),qy),qz))
---end
---function rots(x,y,z,qx,qy,qz)
---return spread(rolq(rolq(rolq({0,x,y,z},qx),qy),qz))
---end
-
-
---function trad(v0,v1,v2)
---local ba,bc={},{}
---ba[1]=v0[1]-v1[1]
---ba[2]=v0[2]-v1[2]
---bc[1]=v2[1]-v1[1]
---bc[2]=v2[2]-v1[2]
---
---local babc=ba[1]*bc[1]+ba[2]*bc[2]
---local ban=(ba[1]*ba[1])+(ba[2]*ba[2])
---local bcn=(bc[1]*bc[1])+(bc[2]*bc[2])
---local x=babc/(sqrt(ban*bcn))
---return atan2(x,-sqrt(1-x*x))
---end
---function facerad(v)
---return acos(1/sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3]))
---end
-
---function acos(x)
--- return atan2(x,-sqrt(1-x*x))
---end
---function rtfp(r)
---return rfp[mid(1,8,flr(r*100)-8)]
---end
---function light(c,r)
-----local s=mid(r,0,1)
---local s=mid(r*2,0,2)
-----dbg(r..' ' ..flr(s+1)*4 .. ' '..mid(1,8,flr(band(s,0x.ffff)*7)+1))
-----local s=1-mid(r*2,0,1)
-----local s=mid(r*4,0,3)
-----dbg('q '..c..' '..s..' '..band(s,0x.ffff)*7+1)
-----return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
---return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
---end
 
 function dot(v1,v2)
 	return v1[1]*v2[1]+v1[2]*v2[2]+v1[3]*v2[3]
@@ -1635,13 +1669,15 @@ local zr=1
 local vt={}
 local tr={}
 local vs={}
-local qx,qy,qz=vradq(orot,1/128)
-local rx,ry,rz=vradq(rview,1/128)
+local qv=vradq({orot.x,orot.y,orot.z,rview.x,rview.y,rview.z},1/128)
+--local qx,qy,qz=vradq(orot,1/128)
+--local rx,ry,rz=vradq(rview,1/128)
 local vtx=o.vt
 local orot=o.rt
-dbg(join(qx,' '))
+--dbg(join(qx,' '))
 vs=tmap(cat({},vtxs),function(v,i)
-local q,vx,vy,vz=vrolq({v[1],v[2],v[3]},qx,qy,qz)
+--local q,vx,vy,vz=vrolq({v[1],v[2],v[3]},qx,qy,qz)
+local q,vx,vy,vz=vrolq({0,v[1],v[2],v[3]},qv)
 --local q,vx,vy,vz=spread(rolq(rolq(rolq({sss,v[1],v[2],v[3]},qx),qy),qz))
 --local cz=.01*(p1z+p2z+p3z)/3
 --local cx=.01*(p1x+p2x+p3x)/3
@@ -1744,34 +1780,6 @@ end
 end)
 
 return vs
-end
--->8
---sort	
-
-function quicksort(v,s,e)
-local i,p
-if(s>=e)return
-p=s
-for i=s+1,e do
-if v[i][4]<v[s][4] then
---if v[i].s>v[s].s then
-p+=1
-v[p],v[i]=v[i],v[p]
-end
-end
-v[s],v[p]=v[p],v[s]
-
-quicksort(v,s,p-1)
-quicksort(v,p+1,e)
-end
-
-function vtopsort(v1,v2,v3)
-
-if(v1[2]<v2[2]) v1,v2={v2[1],v2[2],v2[3]},{v1[1],v1[2],v1[3]}
-if(v2[2]<v3[2]) v2,v3={v3[1],v3[2],v3[3]},{v2[1],v2[2],v2[3]}
-if(v3[2]<v1[2]) v3,v1={v1[1],v1[2],v1[3]},{v3[1],v3[2],v3[3]}
---dbg(v1[2])
-return v1,v2,v3
 end
 -->8
 --trifill
@@ -1952,11 +1960,11 @@ function raster_triangle(p0,p1,p2)
  end
 __gfx__
 00000000000000000000000000000000007000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00070000077777000077077000077700070777000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000d0000077777000077077000077700070777000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00b0c000070007000700070000070000070000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0b000c00070007000700070007070700070007000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-07605700070007000700070007000700700007000700770000000000000000000000000000000000000000000000000000000000000000000000000000000000
-07777700077777007707700000777000077707000777770000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0d605d00070007000700070007000700700007000700770000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0ddddd00077777007707700000777000077707000777770000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -2039,30 +2047,30 @@ c98ac48a000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000073537b530000000000000000cad6cac685568556000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000063456b450000000000000000c6d6c6c6a2566256000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000043434b43000000000000000084d684c685588558000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000008b939ba3f5a3fba30000000000000000000000008f847f84808450e48f845fe4000000008f847f8400000000
-0000000000000000000000000000000000000000859b95abf583fb830000000000000000000000007f748f74a0e4e0b41fb41f54000000007f748f7400000000
-000000000000000000000000000000000000000095a395a3b583bb830000000000000000000000008f8480848084e0b48f841f54000000008f84808400000000
-0000000000000000000000000000000000000000a5939ba5a596ab960000000000000000000000007f847084e054a0145f14af14000000007f84708400000000
-0000000000000000000000000000000000000000ab95ab9695859b850000000000000000000000007f7470748084a0148f84ef54000000007f74707400000000
-0000000000000000000000000000000000000000ab96bba6859b8b9b0000000000000000000000008f7480745014105400000000000000008f74807400000000
-0000000000000000000000000000000000000000a596b5a600000000000000000000000000000000808470748084105400000000000000008084707400000000
-0000000000000000000000000000000000000000b5a3bba3000000000000000000000000000000008084708410b450e400000000000000008084708400000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+729c868c688c287c7a8c7a8ca88ce89c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+929c927c267c289c888c9a8ce69ce67c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+729c727c688c688c9a8cae7ca88ce87c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+868c927c888c7a8cae9ccd9ce89ce67c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+868c868c7a8c4d9c9a8ccd7ca88ca88c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+888c688c6e9c6e7cae7ccd9c888c868c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+688c267c7a8c4d7c9a8c9a8c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+269c289c4d9c6e7c888ca88c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+729c848c478c287c6c8c6c8cc78ce89c000000008b939ba3f5a3fba30000000000000000000000008f847f84808450e48f845fe4000000008f847f8400000000
+929c927c267c289c8b8cac8ce69ce67c00000000859b95abf583fb830000000000000000000000007f748f74a0e4e0b41fb41f54000000007f748f7400000000
+729c727c478c478cac8cae7cc78ce87c0000000095a395a3b583bb830000000000000000000000008f8480848084e0b48f841f54000000008f84808400000000
+848c927c698c6c8cae9ccd9ce89ce67c00000000a5939ba5a596ab960000000000000000000000007f847084e054a0145f14af14000000007f84708400000000
+848c848c6c8c4d9cac8ccd7cc78cc78c00000000ab95ab9695859b850000000000000000000000007f7470748084a0148f84ef54000000007f74707400000000
+768c478c6e9c6e7cae7ccd9c968c848c00000000ab96bba6859b8b9b0000000000000000000000008f7480745014105400000000000000008f74807400000000
+478c267c6c8c4d7cac8cac8c0000000000000000a596b5a600000000000000000000000000000000808470748084105400000000000000008084707400000000
+269c289c4d9c6e7ca98cc78c0000000000000000b5a3bba3000000000000000000000000000000008084708410b450e400000000000000008084708400000000
+729c868c6e7c888ccd9cae9c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+929c927c888ce69ccd7c888c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+729c727cd49cd47c888c347c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+868c927c888ce67c349c269c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+888c888ce69cd47c888c267c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+4d9c4d7c888c888c347c269c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+6e7c888cae9cae7c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+6e9c4d9ccd7c888c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006ea4aea4ae64ba54
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ae646e64ae64aea4
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006ea45ab4bab4ba54
