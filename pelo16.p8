@@ -449,20 +449,7 @@ end
 
 -->8
 function _init()
-menuitem(1,'save',function()
-scenesbat([[
-d st spr_d 0
-k st save_k 0
-m us nil 0
-]],{t='exit form save: x',p='32 1 13 7'})
-end)
-menuitem(2,'load',function(v,i)
-scenesbat([[
-d st spr_d 0
-k st load_k 0
-m us nil 0
-]],{t='exit form load: x',p='32 1 3 7'})
-end)menuitem(3,'play',function(v,i)
+menuitem(1,'play',function(v,i)
 scenesbat([[
 d st spr_d 0
 k st load_k 0
@@ -471,6 +458,31 @@ scenesbat[[
 d st sc_d 0
 k st sc_k 0
 ]]
+end)
+menuitem(2,'load',function(v,i)
+scenesbat([[
+d st spr_d 0
+k st load_k 0
+m cl
+]],{t='exit form load: x',p='32 1 3 7'})
+end)
+menuitem(3,'save',function()
+scenesbat([[
+d st spr_d 0
+k st save_k 0
+m cl
+]],{t='exit form save: x',p='32 1 13 7'})
+end)
+menuitem(4,'export',function(v,i)
+scenesbat([[
+d st spr_d 0
+k st exp_k 0
+m cl
+]],{t='exit form export: x',p='32 1 8 7'})
+end)
+
+menuitem(5,'copy-code',function(v,i)
+exportcode()
 end)
 
 btnc,btns,btrg,butrg=tablefill(0,8),{},{},{}
@@ -488,7 +500,6 @@ arad=atan2(1/3,1)
 vdist=4
 prsp=4
 xyz=htbl[[x y z]]
---rada=htbl[[{0 1 0}{1 0 0}{0 0 1}]]
 rada=htbl[[{1 0 0}{0 1 0}{0 0 1}]]
 eface=true
 
@@ -497,12 +508,9 @@ kmap=htbl[[{-1 0} {1 0} {0 -1} {0 1}]]
 wasd=htbl[[a d w s]]
 view=mkrect[[64 64 128 128]]
 viewb=mkrect[[64 64 128 128]]
---cam=mkrect[[64 64 128 128]]
 rview=mkrect[[0 0 128 128]]
 opos=mkrect[[0 0 0 0]]
---oposb=mkrect[[0 0 0 0]]
 orot=mkrect[[0 0 0 0]]
---orotb=mkrect[[0 0 0 0]]
 oang=mkrect[[0 0 0 0]]
 oscl=mkrect[[64 64 1 1]]
 lpos=mkrect[[1 -5 0 0]]
@@ -512,48 +520,49 @@ viewb.z=64
 
 genab=htbl[[x=true;y=true;z=true;]]
 gedef=htbl[[x=false;y=false;z=false;]]
-rfp=htbl[[0x0003 0x0303 0x030f 0x0f0f 0x0f3f 0x3f3f 0x3fff 0xffff]]--rfp=htbl[[0x0000 0x1040 0x050c 0x5a5a 0xfcf5 0xdfef 0xeff7 0xffff]]
---rfp=htbl[[0xffff 0xeff7 0xdfef 0xfcf5 0x5a5a 0x050c 0x1040 0x0000]]
---vdmp(rfp)
+--rfp=htbl[[0x0003 0x0303 0x030f 0x0f0f 0x0f3f 0x3f3f 0x3fff 0xffff]]--rfp=htbl[[0x0000 0x1040 0x050c 0x5a5a 0xfcf5 0xdfef 0xeff7 0xffff]]
+
+rfp=tmap(split('8 9 10 11 12 13 14 15'),function(i)
+local f=0
+ecxy('0 0 4 4',function(x,y)
+f+=shl(sget(x+i%16*8,y+toc(i%16,16)*8)~=0 and 1 or 0,12-y*4+3-x)
+end)
+return f
+end)
 
 spid=0
 vtxs={}
 vtxsb={}
 vcol=10
 bgcol=5
---cam.z=64
 opos.z=0
 oposb=cat({},opos)
---oposb.z=0
 orot.z=0
 orotb=cat({},orot)
---orotb.z=0
 oang.z=0
 rview.z=0
---cat(view,htbl[[r{x=0;y=0;z=0;}]])
 ldps=3
---vtxsel={1}
 vtxsl=1
 vtxslb=1
 vtxsll=0
 vtxslf=1
 dblwait=0
 
-getmouse()
+rothlf=32
+rotful=64
+scsize=128
+
+mo=getmouse()
 dragstart(opos,1)
 dragstart(view,1)
 dragstart(orot,1)
 dragstart(lpos,1)
 
-rothlf=32
-rotful=64
-scsize=128
 
 local obj={}
 obj.rt=orot
 obj.vt=vtxs
---cls()
---clickp=tablefill({0,0,0,false},16*16*16)
+
 clickp={}
 ecxy('-8 0 16 1',function(z)
 ecxy('-8 -8 16 16',function(x,y)
@@ -561,19 +570,16 @@ add(clickp,{x,y,z})
 end)
 end)
 
-pspal=tablefill(0,16)
+cpalid=7
+palx=cpalid%16*8
+paly=flr(cpalid/16)*8
+lpal=tablefill(0,16)
 ecxy('0 0 2 1',function(c,r)
 ecxy('0 0 4 8',function(x,y)
---pspal[y+c*8][x]=sget(x+c*4,y+32)
-pspal[y+c*8]+=shl(sget(x+c*4,y+32),12-x*4)
---pset(x,y+c*8+32,pspal[y+c*8][x])
---pspal[y][x]=sget(x,y+32)
+lpal[y+c*8]+=shl(sget(x+c*4+palx,y+paly),12-x*4)
 end)
 end)
---stop()
 
---lzbf=tablefill(1,16,16,16)
---pspal=split[[2 8 14 15]]
 
 scenesbat[[
 d st def_d 0
@@ -612,12 +618,7 @@ local p=0
 rectfill(64,64,64,64,7)
 
 local msk=0xffff
---local qx,qy,qz=vradq({orot.x,orot.y,orot.z},1/128)
---local rx,ry,rz=vradq({rview.x,rview.y,rview.z},1/128)
---local qx,qy,qz=vradq({orot.x,orot.y,orot.z,rview.x,rview.y,rview.z},1/128)
 local qv=vradq({rview.x,rview.y,rview.z,orot.x,orot.y,orot.z},1/128)
---local qx,qy,qz=vradq(orot,1/128)
---local rx,ry,rz=vradq(orotb,1/128)
 local zr=8*64+prsp
 local wz=view.z+prsp
 --local zr=64/wz
@@ -762,14 +763,14 @@ circ(vx*z1+view.x,vy*z1+view.y,3,15)
 rectfill(0,120,127,127,0)
 for x=0,15 do
 fillp()
-rectfill(1+x*8,121,4+x*8,126,lshr(pspal[x],4))
+rectfill(1+x*8,121,4+x*8,126,lshr(lpal[x],4))
 fillp(0x0f0f)
-rectfill(5+x*8,121,6+x*8,126,lshr(pspal[x],4))
+rectfill(5+x*8,121,6+x*8,126,lshr(lpal[x],4))
 end
 fillp()
 pset(1,121,5)
 pal(7,vcol)
-rect(vcol*8,120,vcol*8+8,127,pspal[vcol])
+rect(vcol*8,120,vcol*8+8,127,lpal[vcol])
 pal()
 eachpal('56dbc$',(#vtxs<3 or vtxsl%2==1) and 'b0bb0' or '0cc0c')
 spr(spid,mo.x-3,mo.y-3)
@@ -779,8 +780,35 @@ outline(v.i,join({mo.x,mo.y+5,5,7},' '))
 end
 pal()
 
+--dbgs
+dbg(join({opos.x,opos.y,opos.z},' '))
+dbg(join({orot.x,orot.y,orot.z},' '))
+dbg(join({orotb.x,orotb.y,orotb.z},' '))
+dbg(join({view.x,view.y,view.z},' '))
+dbg(join({dragst.x,dragst.y,dragst.z},' '))
+--dbg(join({rview.x,rview.y,rview.z},' '))
+dbg('l:'..join({lpos.x,lpos.y,lpos.z},' '))
+--dbg('o:'..join({orot.x,orot.y,orot.z},' '))
+dbg(stat(1))
+
+
 end
 ,edt_k=function(o)
+cat(genab,gedef)
+local x,y
+=cos(orot.y%rothlf/rothlf)>0
+,cos(orot.x%rothlf/rothlf)>0
+--=inrng(sgn(orot.x)*orot.x%64,-16,16)
+--,inrng(sgn(orot.y)*orot.y%64,-16,16)
+genab.x=x and 1 or not y and -1
+genab.y=y or not x and y
+genab.z=not(genab.y and genab.x)
+if keystate.x or keystate.c or keystate.z then
+genab.x=keystate.x
+genab.y=keystate.c
+genab.z=keystate.z
+end
+
 if mo.lt then
 dragstart(opos)
 chold=true
@@ -811,7 +839,7 @@ vtxsl,vtxslb=#vtxs+1,vtxsl
 vtxsll=0
 end
 end
-
+--dbg(opos.sty)
 if mo.r and mo.lt then
 cat(orot,orotb)
 end
@@ -832,14 +860,21 @@ end
 --**drag cursor**
 if not keystate[' '] and mo.l then
 scale=8
-local p={dragdist(opos,orot)}
-tmap((genab.x and cos((orot.x%rothlf)/rothlf)>0 or genab.y and cos((orot.y%rothlf)/rothlf)<0) and split'x y z' or split'z y x',function(v)
-local s=sgn(cos(orot[v]/128))
-s=1
-opos[v]=mid(-8,7,flr(genab[v] and del(p,p[1])*s+0.5 or opos[v]))
-p=cat({},p)
+local p=tmap({dragdist(opos,orot)},function(v)
+return mid(-8,7,flr(v))
 end)
-opos.ud()
+
+--local p={dragdist(opos,orot)}
+--tmap(xyz,function(v,i)
+----local s=sgn(cos(orot[v]/128))
+--s=genab[v] and del(p,p[1])+0.5 or opos[v]
+----s=genab[v] and del(p,p[1])+0.5 or opos[v]
+--opos[v]=mid(-8,7,flr(s))
+--p=cat({},p)
+--end)
+
+opos.ud(genab.x and p[1] or opos.x,genab.y and p[2] or opos.y).z
+=genab.z and (genab.y and p[3] or p[4]) or opos.z
 scale=1
 
 if opos.x+opos.y+opos.z~=oposb.x+oposb.y+oposb.z then
@@ -939,26 +974,13 @@ oscl.h=1
 --end
 if not keystate.█ then
 tmap(kmap,function(v,i)
-if btn(i-1) or btn(i-1,1) then
+if btn(i-1) then
 view.x-=kmap[i][1]
 view.y-=kmap[i][2]
 end
 end)
 end
-cat(genab,gedef)
-local x,y
-=cos(orot.y%rothlf/rothlf)>0
-,cos(orot.x%rothlf/rothlf)>0
---=inrng(sgn(orot.x)*orot.x%64,-16,16)
---,inrng(sgn(orot.y)*orot.y%64,-16,16)
-genab.x=x and 1 or not y and -1
-genab.y=y or not x and y
-genab.z=not(genab.y and genab.x)
-if keystate.x or keystate.c or keystate.z then
-genab.x=keystate.x
-genab.y=keystate.c
-genab.z=keystate.z
-end
+
 spid=0
 
 if mo.lt then
@@ -1103,17 +1125,16 @@ end
 if keystate['0'] then
 chold=false
 if mo.r then
-orot.z=0
-orot.ud(0,0)
+
+orot.ud(0,0).z=0
 rview.ud(0,0).z=0
 elseif mo.l then
-opos.z=0
-opos.ud(0,0)
-oposb.z=0
-oposb.ud(0,0)
+opos.ud(0,0).z=0
+oposb.ud(0,0).z=0
 elseif keystate[' '] then
-view.ud(64,64)
-view.z=64
+view.ud(64,64).z=64
+elseif mo.m then
+lpos.ud(1,-5).z=-1
 else
 end
 end
@@ -1171,10 +1192,49 @@ cls()
 spr(0,0,0,16,16)
 outline(o.prm.t,o.prm.p)
 fillp(0xcc33)
-if(o.prm.r)o.prm.r.rs(0x16)
+local r=o.prm.r or {}
+tmap(r.x and {r} or r,function(r,i)
+r.rs(0x16)
+outline(i,r.x..' '..r.y..' 0 7')
+end)
 fillp()
 if(o.prm.cr)o.prm.cr.rs(7)
 
+end
+,exp_k=function(o)
+if o.fst then
+keytrg["\r"]=false
+o.prm.r={}
+end
+local i=mo.lt and #o.prm.r+1 or #o.prm.r
+local c,s=selcell()
+o.prm.r[i]=s or o.prm.r[i]
+del(o.prm.r,mo.rt and o.prm.r[#o.prm.r])
+--o.prm.r=mo.rt and {} or o.prm.r
+o.prm.cr=c or o.prm.cr
+
+if keytrg["\r"] or keytrg.z then
+local objs={}
+tmap(o.prm.r or {},function(r)
+local ids={}
+ecxy({toc(r.x),toc(r.y),toc(r.w),toc(r.h)},function(x,y)
+add(ids,x+y*16)
+end)
+local g='--'..getgfx(r)
+add(objs,g.."\n{"..join(ids,',')..'}')
+end)
+printh("plgn_load({\n"..join(objs,",\n").."\n})",'@clip')
+--o.prm.r={}
+end
+
+if keystate.x then
+scenesbat[[
+d st def_d 0
+k st edt_k 0
+m st def_k 0
+]]
+return 1
+end
 end
 ,save_k=function(o)
 if o.fst then
@@ -1220,7 +1280,7 @@ if keystate.x then
 scenesbat[[
 d st def_d 0
 k st edt_k 0
-m rm
+m st def_k 0
 ]]
 return 1
 end
@@ -1275,7 +1335,7 @@ vtxs=#ts>0 and ts or vtxs
 scenesbat[[
 d st def_d 0
 k st edt_k 0
-m rm
+m st def_k 0
 ]]
 return 1
 end
@@ -1284,7 +1344,7 @@ if keystate.x then
 scenesbat[[
 d st def_d 0
 k st edt_k 0
-m rm
+m st def_k 0
 ]]
 return 1
 end
@@ -1318,15 +1378,6 @@ drsc[v].tra()
 end)
 
 isdebug=true
-dbg(join({opos.x,opos.y,opos.z},' '))
-dbg(join({orot.x,orot.y,orot.z},' '))
-dbg(join({orotb.x,orotb.y,orotb.z},' '))
-dbg(join({view.x,view.y,view.z},' '))
-dbg(join({rview.x,rview.y,rview.z},' '))
-dbg('l:'..join({lpos.x,lpos.y,lpos.z},' '))
---dbg('o:'..join({orot.x,orot.y,orot.z},' '))
-dbg(stat(1))
-dbg(vtxsll)
 
 dbg_print()
 end
@@ -1395,11 +1446,12 @@ end
 
 return mo
 end
-
+dragst=htbl[[x=0;y=0;z=0;]]
 function dragstart(vw,f)
 if ambtn() or f then
---vw.stx,vw.sty,vw.stz=vw.x*rvrsa('x'),vw.y*rvrsa('y'),vw.z*rvrsa('z')
 vw.stx,vw.sty,vw.stz=vw.x,vw.y,vw.z
+--local qv=vradq({orot.x,orot.y,orot.z},1/rotful)
+--vw.stq,vw.stx,vw.sty,vw.stz=vrolq({0,vw.x,vw.y,vw.z},qv)
 end
 end
 
@@ -1409,6 +1461,10 @@ local qv=vradq({rv.x,rv.y,rv.z},1/rotful)
 local x,y,zx,zy=mo.x-mo.sx,mo.y-mo.sy,mo.x-mo.sx,mo.y-mo.sy
 local q,x,y,zx=vrolq({0,x,y,zx},qv)
 return
+-- x/scsize*rotful+dragst.y
+--,y/scsize*rotful+dragst.x
+--,zx/scsize*rotful+dragst.z
+--,zy/scsize*rotful+dragst.z
  x/scsize*rotful+vw.sty
 ,y/scsize*rotful+vw.stx
 ,zx/scsize*rotful+vw.stz
@@ -1417,18 +1473,26 @@ end
 
 function dragdist(vw,rv)
 
---local qx,qy,qz=vradq({x=rv.x,y=rv.y,z=rv.z},1/128)
 local qv=vradq({rv.x,rv.y,rv.z},1/scsize)
-local x,y,z=mo.x-mo.sx,mo.y-mo.sy,64
+local x,y,zx,zy=mo.x-mo.sx,mo.y-mo.sy
+,mo.x-mo.sx
+,mo.y-mo.sy
+--,genab.y and mo.x-mo.sx or 0
+--,genab.x and mo.y-mo.sy or 0
+--local q,x,y,zx=vrolq({0,x,y,zx},qv)
+--local q,x,y,zx=vrolq({0,genab.x and x or zx,genab.y and y or zy,zx},qv)
+
 return
- x/scale+(genab.x and vw.stx or vw.stz)
-,y/scale+(genab.y and vw.sty or vw.stz)
+ x/scale+vw.stx
+,y/scale+vw.sty
+
+-- x/scale+(genab.x and vw.stx or vw.stz)
+--,y/scale+(genab.y and vw.sty or vw.stz)
+,zx/scale+vw.stz
+,zy/scale+vw.stz
+
 -- x/scale*rvrsa('x')+(genab.x and vw.stx or vw.stz)
 --,y/scale*rvrsa('y')+(genab.y and vw.sty or vw.stz)
-
--- (x/scale+(genab.x and vw.stx or -vw.stz))*rvrsa('x')
---,(y/scale+(genab.y and vw.sty or -vw.stz))*rvrsa('y')
---,z/scale+vw.stz
 end
 function rvrsa(a)
 return sgn((a=='y' and cos or sin)((orot[a]-16)/scsize))
@@ -1492,14 +1556,14 @@ function selcell(mx)
 --mx=17
 local cr,sr=mkrect'0 0 8 8'
 cr.ud(toc(mo.x)*8,toc(mo.y)*8)
-if mo.l or mo.r then
+if mo.l then
 local x,y=toc(mo.sx)*8,toc(mo.sy)*8
 local reqn=toc(mx or 32767,16)+1
 local w,h
 =max(8,toc(mo.x+8)*8-x)
 ,max(8,toc(mo.y+8)*8-y)
-dbg(toc(reqn*8,h+8)*8)
-dbg(reqn)
+--dbg(toc(reqn*8,h+8)*8)
+--dbg(reqn)
 --o.prm.r.ud(r.x,r.y
 sr=mkrect'0 0 0 0'.ud(x,y
 --w h*w
@@ -1507,20 +1571,13 @@ sr=mkrect'0 0 0 0'.ud(x,y
 ,mid(8,h,toc(reqn*8,w)*8))
 --,mid(8,w,toc(reqn,toc(h+8))*8)
 --,mid(8,h,toc(reqn,toc(w+8))*8))
-else
---r=o.prm.cr.ud(toc(mo.x)*8,toc(mo.y)*8)
 end
 return cr,sr
 end
 -->8
---draw
+--draw code
 
 function line3(x1,y1,z1,x2,y2,z2,qv,c)
---function line3(x1,y1,z1,x2,y2,z2,qx,qy,qz,c)
---local q,x1,y1,z1=rots(x1,y1,z1,qx,qy,qz)
---local q,x2,y2,z2=rots(x2,y2,z2,qx,qy,qz)
---local q,x1,y1,z1=vrolq({0,x1,y1,z1},{qx,qy,qz})
---local q,x2,y2,z2=vrolq({0,x2,y2,z2},{qx,qy,qz})
 local q,x1,y1,z1=vrolq({0,x1,y1,z1},qv)
 local q,x2,y2,z2=vrolq({0,x2,y2,z2},qv)
 local zr=64*8+prsp
@@ -1537,16 +1594,9 @@ return tmap(v,function(a,i)
 i=(i-1)%3+1
 return radq(a*s,normalize(rada[i],1))
 end)
---return spread(tmap(cat({},xyz),function(a,i)
---i=normalize(rada[i],1)
---return radq(v[a]*s,i)
---end))
 
 end
 
---sss=0
---function vrolq(x,y,z,qx,qy,qz)
---function vrolq(v,qx,qy,qz)
 function vrolq(v,q)
 --local rx,ry,rz=vradq(orotb,1/128)
 local v1,v2,v3,v4=v[1],v[2],v[3],v[4]
@@ -1554,16 +1604,250 @@ for i,r in pairs(q) do
 v1,v2,v3,v4=rolq(r[1],r[2],r[3],r[4],v1,v2,v3,v4)
 end
 return v1,v2,v3,v4
---return
---rolq(qx[1],qx[2],qx[3],qx[4],
---rolq(qz[1],qz[2],qz[3],qz[4],
---rolq(qy[1],qy[2],qy[3],qy[4],
---0,v[1],v[2],v[3])
---))
---)))
---return rolq(rolq(rolq({0,x,y,z},qx),qy),qz)
 end
 
+function getgfx(r)
+local p=''
+ecxy({r.x,r.y,r.w,r.h},function(x,y)
+p=p..tohex(sget(x,y))
+end)
+return "[gfx]"..join({tohex(r.w,2),tohex(r.h,2),p},'').."[/gfx]"
+end
+
+function exportcode()
+printh([[
+--generated by pelogen
+--@shiftalow/bitchunk
+
+--**color palette for light**--
+]]..getgfx(mkrect({palx,paly,8,8}))..
+[[
+
+--**cut & paste to sprite sheet**--
+cpalid=--sprite id as a color palette
+
+]]
+..[[rfp={]]..join(tmap(rfp,function(v)return '0x'..tohex(v)end),',')..[[}
+function plgn_load(r)
+lpos=normalize(1,-5,-1,1)
+vtxs={}
+prspx=4
+prspy=4
+prspz=4
+culr=1
+rothlf=32
+rotful=64
+palx=cpalid%16*8
+paly=flr(cpalid/16)*8
+--xyz=split('x y z')
+rada={{0,1,0},{1,0,0},{0,0,1}}
+lpal={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+lpal[0]=0
+for c=0,1 do
+for y=0,7 do
+for x=0,3 do
+lpal[y+c*8]+=shl(sget(x+c*4+palx,y+paly),12-x*4)
+end
+end
+end
+cls()
+objl={}
+for i,ids in pairs(r) do
+local ts={}
+for i,v in pairs(ids) do
+local l,t=v%16*8,flr(v/16)*8
+for y=0,7 do
+y+=t
+for x=0,1 do
+if peek2(l/2+(y)*0x40+x*2)~=0 then
+x=x*4+l
+add(ts,{
+sget(x,y)-8
+,sget(x+1,y)-8
+,sget(x+2,y)-8
+,sget(x+3,y)
+,i=#ts+1
+})
+pset(x,y,sget(x,y))
+pset(x+1,y,sget(x+1,y))
+pset(x+2,y,sget(x+2,y))
+pset(x+3,y,sget(x+3,y))
+end
+end
+end
+end
+objl[i]=ts
+end
+return objl
+end
+
+--quaternion
+function radq(r,v)
+local s=sin(r/2)
+return {cos(r/2),v[1]*s,v[2]*s,v[3]*s}
+end
+
+function qprd(r1,r2,r3,r4,q1,q2,q3,q4)
+return
+ q1*r1-q2*r2-q3*r3-q4*r4
+,q1*r2+q2*r1+q3*r4-q4*r3
+,q1*r3+q3*r1+q4*r2-q2*r4
+,q1*r4+q4*r1+q2*r3-q3*r2
+end
+
+function rolq(r1,r2,r3,r4,q1,q2,q3,q4)
+return qprd(r1,-r2,-r3,-r4,qprd(q1,q2,q3,q4,r1,r2,r3,r4))
+end
+
+function rtfp(r)
+return rfp[mid(1,8,flr(r*100)-8)]
+end
+function light(c,r)
+local s=mid(r*3,0,3)
+return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
+end
+
+function dot(v1,v2)
+	return v1[1]*v2[1]+v1[2]*v2[2]+v1[3]*v2[3]
+end
+
+function normalize(x,y,z)
+local l=1/sqrt(x*x+y*y+z*z)
+return {x*l,y*l,z*l}
+end
+
+gvtx={}
+function objdraw(o)
+local zr=8*64+prspx
+local vt={}
+local tr={}
+local vs={}
+local wx,wy,wz=o.v.x,o.v.y,o.v.z
+local ra=1/rotful
+
+local r={o.r.x,o.r.y,o.r.z}
+local q={}
+for i,v in pairs(r) do
+add(q,radq(v*ra,rada[i]))
+end
+
+--local vs=gvtx[o.t] or {}
+local vs={}
+
+if #vs==0 then
+for i,v in pairs(objl[o.t]) do
+local v1,v2,v3,v4=0,v[1],v[2],v[3]
+for i,r in pairs(q) do
+v1,v2,v3,v4=rolq(r[1],r[2],r[3],r[4],v1,v2,v3,v4)
+end
+
+v={
+v2*o.w
+,v3*o.h
+,v4*o.d,v[4]
+,i=i
+}
+vt[v.i]=v
+add(vs,v)
+end
+quicksort(vs,1,#vs)
+for i,v in pairs(vs) do
+	if v.i>2 then
+	local c=v[4]
+	local v1,v2,v3
+		if band(v.i,1)==1 then
+		v1,v2,v3=vt[v.i-2],vt[v.i-1],v
+		else
+		v1,v2,v3=v,vt[v.i-1],vt[v.i-2]
+		end
+	
+	local x1,y1,z1=v1[1],v1[2],v1[3]
+	local x2,y2,z2=v2[1],v2[2],v2[3]
+	local x3,y3,z3=v3[1],v3[2],v3[3]
+	
+	lpos=lpos or normalize(0,0,-64,1)
+	local c,fp=light
+	(lpal[c]
+	,dot(
+	normalize(vtopsort(v1,v2,v3))
+	,lpos
+	))
+	
+	local cull=((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)<0 and culr or bnot(culr))>0
+	vs[i]={x1,y1,z1,x2,y2,z2,x3,y3,z3,c,fp,cull}
+	end
+end
+	gvtx[o.t]=vs
+end--not same obj
+
+for i,v in pairs(vs) do
+
+if v[11] and v[12] then
+local z1,z2,z3
+=zr/(wz-v[3]+prspx)
+,zr/(wz-v[6]+prspy)
+,zr/(wz-v[9]+prspz)
+p01_triangle_163
+(v[1]*z1+wx
+,v[2]*z1+wy
+,v[4]*z2+wx
+,v[5]*z2+wy
+,v[7]*z3+wx
+,v[8]*z3+wy,v[10],v[11])
+end
+end
+return vs
+end
+
+--sort
+function vtopsort(v1,v2,v3)
+if(v1[2]<v2[2]) v1,v2=v2,v1
+if(v2[2]<v3[2]) v2,v3=v3,v2
+if(v3[2]<v1[2]) v3,v1=v1,v3
+return v1[1],v1[2],v1[3]
+end
+
+function quicksort(v,s,e)
+local i,p
+if(s>=e)return
+p=s
+
+for i=s+1,e do
+if v[i][4]<v[s][4] then
+p+=1
+v[p],v[i]=v[i],v[p]
+end
+end
+v[s],v[p]=v[p],v[s]
+
+quicksort(v,s,p-1)
+quicksort(v,p+1,e)
+end
+
+--trifill
+--@p01
+function p01_triangle_163(x0,y0,x1,y1,x2,y2,col,fp)
+ color(col)
+ fillp(fp)
+ if(y1<y0)x0,x1,y0,y1=x1,x0,y1,y0
+ if(y2<y0)x0,x2,y0,y2=x2,x0,y2,y0
+ if(y2<y1)x1,x2,y1,y2=x2,x1,y2,y1
+ col=x0+(x2-x0)/(y2-y0)*(y1-y0)
+ p01_trapeze_h(x0,x0,x1,col,y0,y1)
+ p01_trapeze_h(x1,col,x2,x2,y1,y2)
+end
+function p01_trapeze_h(l,r,lt,rt,y0,y1)
+ lt,rt=(lt-l)/(y1-y0),(rt-r)/(y1-y0)
+ if(y0<0)l,r,y0=l-y0*lt,r-y0*rt,0
+ y1=min(y1,128)
+ for y0=y0,y1 do
+  rectfill(l,y0,r,y0)
+  l+=lt
+  r+=rt
+ end
+end
+]],"@clip")
+end
 -->8
 --for 3d render
 
@@ -1630,33 +1914,24 @@ function dot(v1,v2)
 	return v1[1]*v2[1]+v1[2]*v2[2]+v1[3]*v2[3]
 end
 
-function cross(p,v1,v2)
---local ax=v1[1]-p[1]
---local ay=v1[2]-p[2]
---local az=v1[3]-p[3]
---local bx=v2[1]-p[1]
---local by=v2[2]-p[2]
---local bz=v2[3]-p[3]
-local ax=v1[1]
-local ay=v1[2]
-local az=v1[3]
-local bx=v2[1]
-local by=v2[2]
-local bz=v2[3]
---dbg(ay*bz-az*by)
-return
- {ay*bz-az*by
-	,az*bx-ax*bz
-	,ax*by-ay*bx
-	}
-end
+--function cross(p,v1,v2)
+--
+--local ax=v1[1]
+--local ay=v1[2]
+--local az=v1[3]
+--local bx=v2[1]
+--local by=v2[2]
+--local bz=v2[3]
+----dbg(ay*bz-az*by)
+--return
+-- {ay*bz-az*by
+--	,az*bx-ax*bz
+--	,ax*by-ay*bx
+--	}
+--end
 
 function normalize(v,s)
---local l=sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3])
---local l=s/sqrt(v[1],2)+shl(v[2],2)+shl(v[3],2))
---dbg(v[1]*v[1]+v[2]*v[2]+v[3]*v[3])
 local l=s/sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3])
---return {v[1]/l,v[2]/l,v[3]/l}
 return {v[1]*l,v[2]*l,v[3]*l}
 end
 
@@ -1670,69 +1945,31 @@ local vt={}
 local tr={}
 local vs={}
 local qv=vradq({orot.x,orot.y,orot.z,rview.x,rview.y,rview.z},1/128)
---local qx,qy,qz=vradq(orot,1/128)
---local rx,ry,rz=vradq(rview,1/128)
 local vtx=o.vt
 local orot=o.rt
---dbg(join(qx,' '))
 vs=tmap(cat({},vtxs),function(v,i)
---local q,vx,vy,vz=vrolq({v[1],v[2],v[3]},qx,qy,qz)
 local q,vx,vy,vz=vrolq({0,v[1],v[2],v[3]},qv)
---local q,vx,vy,vz=spread(rolq(rolq(rolq({sss,v[1],v[2],v[3]},qx),qy),qz))
---local cz=.01*(p1z+p2z+p3z)/3
---local cx=.01*(p1x+p2x+p3x)/3
---local cy=.01*(p1y+p2y+p3y)/3
 
 v=cat({},{
 vx*zr*oscl.w
 ,vy*zr*oscl.h
 ,vz*zr,v[4]
 ,i=i
---,s=i>2 and -vz-vt[i-1][3]-vt[i-2][3] or 32765
 })
---dbg(v.s)
---v[1]=v[1]
---v[2]=v[2]
---v[1]=v[1]*8*zr*oscl.w+view.x
---v[2]=v[2]*8*zr*oscl.h+view.y
---dbg(v[1])
-
 vt[v.i]=v
 return v
 end)
 
---tmap(rolzsort(vt,vradq(orot,1/128)),function(v,i)
---tmap(rolzsort(vt,qx,qy,qz),function(v,i)
 quicksort(vs,1,#vs)
 tmap(vs,function(v,i)
 --if #tr>2 then
 if v.i>2 then
 local c=v[4]
 tr=band(v.i,1)==1 and {vt[v.i-2],vt[v.i-1],v} or {v,vt[v.i-1],vt[v.i-2]}
---tr=band(v.i,1)==1 and {v,vt[v.i-2],vt[v.i-1]} or {vt[v.i-2],vt[v.i-1],v}
---tr=band(v.i,1)==1 and {vt[v.i-2],vt[v.i-1],v} or {vt[v.i-3],vt[v.i-1],v}
---tr=v.i==3 and {vt[v.i-2],vt[v.i-1],v} or {vt[v.i-3],vt[v.i-1],v}
---tr={v,vt[v.i-1],vt[v.i-2]}
---dbg('vt '..join(v,' '))
---dbg('nm '..join(normalize(v,1),' '))
---dbg('nm '..join(normalize({view.x,view.y,view.z},1),' '))
---dbg(dot(normalize({view.x,view.y,view.z}),normalize(v,1)))
+
 local l={lpos.x,lpos.y,lpos.z}
-if i==3 then
---dbg('dot '..
---dot(normalize(cross
---(tr[1],tr[2],tr[3])
---,1),normalize(l,1)))
-end
---cross(tr[1],tr[2],tr[3])
---local c,fp=light(pspal[tr[1][4]],dot({0,0,-32},normalize(v,1)))
---dbg(dot(normalize(v,1)
---,normalize(l,1)))
---dbg('top' ..join(vtopsort(tr[1],tr[2],tr[3]),' '))
---dbg(join(normalize(vtopsort(tr[1],tr[2],tr[3]),1),' '))
---tr[vtopsort(tr[1],tr[2],tr[3]).i].t=true
 local c,fp=light
-(pspal[c]
+(lpal[c]
 ,dot(
 normalize(vtopsort(tr[1],tr[2],tr[3]),1)
 --,normalize(tr[3],1)))
@@ -1814,158 +2051,24 @@ function p01_trapeze_w(t,b,tt,bt,x0,x1)
   b+=bt
  end
 end
-function raster_triangle(p0,p1,p2)
-  --determine orientation of pts
-  local p_left,p_mid,p_right
-  
-  if p0[1]<p1[1] and p0[1]<p2[1] then
-   p_left=p0
-   if p1[1]<p2[1] then
-    p_mid,p_right=p1,p2
-   else
-    p_mid,p_right=p2,p1
-   end
-  elseif p1[1]<p0[1] and p1[1]<p2[1] then
-   p_left=p1
-   if p0[1]<p2[1] then
-    p_mid,p_right=p0,p2
-   else
-    p_mid,p_right=p2,p0
-   end
-  elseif p2[1]<p0[1] and p2[1]<p1[1] then
-   p_left=p2
-   if p0[1]<p1[1] then
-    p_mid,p_right=p0,p1
-   else
-    p_mid,p_right=p1,p0
-   end
-  else -- one pt.x==another pt.x
-   if p0[1]<p1[1] or p0[1]<p2[1] then
-    p_left=p0
-    if p1[1]<p2[1] then
-     p_mid,p_right=p1,p2
-    else
-     p_mid,p_right=p2,p1
-    end
-   elseif p1[1]<p0[1] or p1[1]<p2[1] then
-    p_left=p1
-    if p0[1]<p2[1] then
-     p_mid,p_right=p0,p2
-    else
-     p_mid,p_right=p2,p0
-    end
-   else
-    p_left=p2
-    if p0[1]<p2[1] then
-     p_mid,p_right=p0,p2
-    else
-     p_mid,p_right=p2,p0
-    end
-   end
-  end
 
-  --p_left[1]+=0.5
-  --p_left[2]+=0.5
-  --p_mid[1]+=0.5
-  --p_mid[2]+=0.5
-  --p_right[1]+=0.5
-  --p_right[2]+=0.5
-
-  --calculate right triangles
-  local base_dist=p_right[1]-p_left[1]
-  local seg1_dist=p_mid[1]-p_left[1]
-  local seg2_dist=base_dist-seg1_dist
-  
-  local base_yinc,seg1_yinc,seg2_yinc
-  
-  if base_dist==0 then
-   base_yinc=0
-  else
-   base_yinc=(p_right[2]-p_left[2])/base_dist
-  end
-  if seg1_dist<=0 then
-   seg1_yinc=0
-  else
-   seg1_yinc=(p_mid[2]-p_left[2])/seg1_dist
-  end
-  if seg2_dist<=0 then
-   seg2_yinc=0
-  else
-   seg2_yinc=(p_right[2]-p_mid[2])/seg2_dist
-  end
-  
-  --start rasterizing
-  local x=p_left[1]
-  local y0=p_left[2]
-  local y1=y0
-  local off
-
-  --make sure we don't waste time
-  --rastering outside the canvas
-  if x<0 then
-   seg1_dist=seg1_dist+x
-   if seg1_dist>0 then
-    off=-x
-   else
-    off=seg1_dist-x
-   end
-   y0+=(off*seg1_yinc)
-   y1+=(off*base_yinc)
-   x+=off
-  end
-
-  if x+seg1_dist>=128 then
-   seg1_dist=128-x
-   seg2_dist=0
-  end
-
-  --raster first triangle
-  for i=1,seg1_dist do
-   rectfill(x,y0,x,y1)
-   y0+=seg1_yinc
-   y1+=base_yinc
-   x+=1
-  end
-  
-  y0=p_mid[2]
-  
-  if x<0 then
-   seg2_dist=seg2_dist+x
-   if seg2_dist>0 then
-    off=-x
-   else
-    off=seg2_dist-x
-   end
-   y0+=off*seg2_yinc
-   y1+=off*base_yinc
-   x+=off
-  end
-
-  if x+seg2_dist>=128 then
-   seg2_dist=128-x
-  end
-  
-  --raster second triangle
-  for i=1,seg2_dist do
-   rectfill(x,y0,x,y1)
-   y0=y0+seg2_yinc
-   y1=y1+base_yinc
-   x=x+1
-  end
-  
-  --ensure thin triangles 
-  --don't disappear
-  --line(p_left[1],p_left[2],p_mid[1],p_mid[2])
-  --line(p_mid[1],p_mid[2],p_right[1],p_right[2])
- end
 __gfx__
-00000000000000000000000000000000007000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000d0000077777000077077000077700070777000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00b0c000070007000700070000070000070000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0b000c00070007000700070007070700070007000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0d605d00070007000700070007000700700007000700770000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0ddddd00077777007707700000777000077707000777770000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000000000000000000000000000070000000000000000000000000288e0070000000700000007000007070000007070000077700007777000077770000
+000d00000777770000770770000777000707770007000000000000000112499a0000000007000000070000000707000070770000707700007077000077770000
+00b0c000070007000700070000070000070000700000000000000000122d9aa77000000070000000707000007070000077070000770700007777000077770000
+0b000c00070007000700070007070700070007000700000000000000133b3bb70000000000070000070700000707000070700000777000007770000077770000
+0d605d00070007000700070007000700700007000700770000000000244fdcc70000000000000000000000000000000000000000000000000000000000000000
+0ddddd0007777700770770000077700007770700077777000000000015565dd60000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000007000000000000000000056678eef0000000000000000000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000000000006777eff70000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000070007000700070007000707070707007070707077707777777777777777777
+00000000000000000000000000000000000000000000000000000000000000000000000007000700070007000707070770777077707770777077707777777777
+00000000000000000000000000000000000000000000000000000000000000007000700070007000707070707070707077077707770777077777777777777777
+00000000000000000000000000000000000000000000000000000000000000000000000000070007070707070707070770707070777077707770777077777777
+00000000000000000000000000000000000000000000000000000000000000000070007000700070007000707070707007070707077707777777777777777777
+00000000000000000000000000000000000000000000000000000000000000000000000007000700070007000707070770777077707770777077707777777777
+00000000000000000000000000000000000000000000000000000000000000007000700070007000707070707070707077077707770777077777777777777777
+00000000000000000000000000000000000000000000000000000000000000000000000000070007070707070707070770707070777077707770777077777777
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1975,8 +2078,6 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000044440000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000044440000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1991,22 +2092,15 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000288e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0112499a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-122d9aa7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-133b3bb7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-244fdcc7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-15565dd6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-56678eef000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-6777eff7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-248f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-249a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-14a70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-23bf0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-1dc60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-15d60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-28ef0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-4ef70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
