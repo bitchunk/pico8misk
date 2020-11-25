@@ -13,19 +13,19 @@ function todeg(p)
 return tonum('0x'..p)
 end
 function tohex(p,n)
-local x,y=''
-p=tonum(p)
-repeat
-y=band(p,0xf)
-x=sub('0123456789abcdef',y+1,y+1)..x
-p=lshr(p-y,4)
-until p==0
-return join(tablefill(0,(n or 0)-#x),'')..x
+p=sub(tostr(tonum(p),16),3,6)
+while sub(p,1,1)=='0' do
+p=sub(p,2)
 end
-function pack(h,l,b)
+p=join(tablefill(0,(n or 0)-#p),'')..p
+return p
+end
+
+
+function ttoh(h,l,b)
 return bor(shl(tonum(h),b),tonum(l))
 end
-function unpack(v)
+function htot(v)
 return {lshr(band(v,0xff00),8),band(v,0xff)}
 end
 
@@ -40,11 +40,10 @@ return a
 end
 
 function htbl(ht,ri)
-local t,c,k,rt,p={},0,''
+local t,c,k,rt,p={},0
 
-ri=ri or 0
-ht=replace(ht,"\n")
-while #ht>0 do
+ri,ht=ri or 0,ri and ht or replace(ht,"\n")
+while ht~='' do
 p,ht=sub(ht,1,1),sub(ht,2)
  if p=='{' or p=='=' then
   rt,ht=htbl(ht,ri+1)
@@ -52,48 +51,44 @@ p,ht=sub(ht,1,1),sub(ht,2)
 	  if p=='=' then
 	   t[k]=rt[1]
 	  else
-	   if #k>0 then
+	   if k then
 	    t[k]=rt
 	   else
 	    add(t,rt)
 	   end
 	  end
   end
-  k=''
+  k=nil
  elseif p=='}' or p==';' or p==')' then
-  if #k>0 then
-   add(t,tonorm(k))
-  end
-  k=''
+  add(t,tonorm(k))
+  k=nil
   return t,ht
  elseif p==' ' then
-  if #k>0 then add(t,tonorm(k)) end
-  k=''
+  add(t,tonorm(k))
+  k=nil
  else
-  k=k..p
+  k=(k or '')..p
  end
 end
-if #k>0 then
 add(t,tonorm(k))
-end
 return t
 end
 
 
-function mkrect(p)
-return rectf.new(istable(p) and p or split(p))
+function exrect(p)
+return _exrect.new(ttable(p) or split(p))
 end
-rectf={}
+_exrect={}
 mkrs=htbl'x y w h ex ey r p'
 hovk=htbl'{x y}{x ey}{ex y}{ex ey}'
 function rfmt(p)
 for i,v in pairs(p) do
 p[i]=tonum(v)
 end
-local x,y,w,h=spread(p)
-return comb(mkrs,cat(p,{x+w-1,y+h-1,w/2,p}))
+local x,y,w,h=unpack(p)
+return comb(mkrs,{x,y,w,h,x+w-1,y+h-1,w/2,p})
 end
-rectf.new=function(p)
+_exrect.new=function(p)
 
 local o=rfmt(p)
 cat(o,{
@@ -114,10 +109,9 @@ end
 
 ,ud=function(p,y,w,h)
 if type(p)=='string' then
-p,y,w,h=spread(split(p))
+p,y,w,h=unpack(split(p))
 end
-p={p or o.x,y or o.y,w or o.w,h or o.h}
-cat(o,rfmt(p))
+cat(o,rfmt({p or o.x,y or o.y,w or o.w,h or o.h}))
 return o
 end
 
@@ -146,35 +140,33 @@ function toc(v,p)
 return flr(v/(p or 8))
 end
 
-function join(s,d,dd)
+function join(s,d)
 local a=''
 for i,v in pairs(s) do
 a=a..v..d
 end
-return sub(a,1,#a-#d)
+return sub(a,1-#d)
 end
 
-function split(str,d,dd)
-local a,c,s,tk={},0,'',''
-if dd then str=split(str,dd) end
-while #str>0 do
- if dd then
-  add(a,split(str[1],d))
-  del(str,str[1])
- else
-  s=sub(str,1,1)
-  str=sub(str,2)
-  if s==(d or ' ') then
-   add(a,tk)
-   tk=''
-  else
-   tk=tk..s
-  end
- end
+
+_tonum,tonum=tonum,function(v)
+return v and _tonum(v) or nil
 end
-add(a,tk~='' and tk or nil)
+
+_split,split=split,function(str,d,dd)
+local a,c,s,tk={},0,''
+if dd then str=split(str,dd) end
+if dd then
+while #str>0 do
+add(a,split(del(str,str[1]),d))
+end
+else
+a=_split(str,d or ' ',false)
+end
+add(a,tk)
 return a
 end
+
 
 function btd(b,n)
 local d={}
@@ -219,15 +211,15 @@ if r and r>0 then
 n,r=r,n
 end
 
-local p=istable(v) and #v==0
+local p=ttable(v) and #v==0
 for i=0,n-1 do
-t[i]=p and {} or (r and tablefill(v,r) or v)
+t[i]=p and {} or r and tablefill(v,r) or v
 end
 return t
 end
 
 function ecxy(p,f)
-p=mkrect(p)
+p=exrect(p)
 for y=p.y,p.ey do
 for x=p.x,p.ex do
 f(x,y,p)
@@ -236,7 +228,7 @@ end
 end
 
 function outline(t,a)
-local i,j,k,l=spread(split(a))
+local i,j,k,l=unpack(split(a))
 ecxy('-1 -1 3 3',function(x,y)
 ?t,x+i,y+j,l
 end)
@@ -245,22 +237,21 @@ end
 
 function tmap(t,f)
 for i,v in pairs(t) do
-local c=f(v,i)
-t[i]=c or t[i]
+t[i]=f(v,i) or t[i]
 end
 return t
 end
 
-function eachpal(f,t)
+function eachpal(f,t,b)
 for i=1,#f-1 do
-local s=istable(t) and t[i] or todeg(sub(t,i,i))
-local d=s>0 and pal or palt
+local s=ttable(t) and t[i] or todeg(sub(t,i,i))
+local d=s>(b or 0) and pal or palt
 d(todeg(sub(f,i,i)),s)
 end
 end
 
-function istable(p)
-return type(p)=='table'
+function ttable(p)
+return type(p)=='table' and p
 end
 
 function inrng(c,l,h)
@@ -274,12 +265,3 @@ function bmch(b,m,l)
 b=band(b,m)
 return l and b~=0 or b==m
 end
-
-function spread(t,n)
-n=n or 1
-if t[n]~=nil then
-return t[n],spread(t,n+1)
-end
-end
-
-
