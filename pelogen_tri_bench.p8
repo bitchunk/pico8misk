@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 41
+version 42
 __lua__
 --triangle fill thunderdome rnd 2
 --by musurca and p01
@@ -20,8 +20,8 @@ extenty=127+50
 --_set_fps(60)
 
 -- added srand in hopes of making it more consistent
-srand(4)
---srand(16)
+--srand(4)
+srand(23) --low score and make a difference
 
 function rndextents() return flr(extentx+rnd(extenty-extentx)) end
 
@@ -643,16 +643,19 @@ tests={}
 
 -->8
 --proc branch goto local func
---add(tests, {len=229, author="shiftalow(hv)", fn=function(i) local v=flattable[i] pelogen_tri_hv(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
---add(tests, {len=261, author="shiftalow(hvdfif)", fn=function(i) local v=flattable[i] pelogen_tri_hvdfif(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
-add(tests, {len=272, author="shiftalow(hvb)", fn=function(i) local v=flattable[i] pelogen_tri_hvb(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+----add(tests, {len=229, author="shiftalow(hv)", fn=function(i) local v=flattable[i] pelogen_tri_hv(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+----add(tests, {len=261, author="shiftalow(hvdfif)", fn=function(i) local v=flattable[i] pelogen_tri_hvdfif(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+--add(tests, {len=272, author="shiftalow(hvb)", fn=function(i) local v=flattable[i] pelogen_tri_hvb(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+--add(tests, {len=273, author="shiftalow(hvb&-1)", fn=function(i) local v=flattable[i] pelogen_tri_hvbam(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+add(tests, {len=272, author="shiftalow(hvb&ffff)", fn=function(i) local v=flattable[i] pelogen_tri_hvbaf(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
 
 --lowest token
-add(tests, {len=113, author="shiftalow(low)", fn=function(i) local v=flattable[i] pelogen_tri_low(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+--add(tests, {len=113, author="shiftalow(low)", fn=function(i) local v=flattable[i] pelogen_tri_low(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+--add(tests, {len=113, author="shiftalow(lowl)", fn=function(i) local v=flattable[i] pelogen_tri_lowl(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
 --
 ----top clipping
-add(tests, {len=140, author="shiftalow(tclip)", fn=function(i) local v=flattable[i] pelogen_tri_tclip(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
---add(tests, {len=148, author="shiftalow(tclipdfif)", fn=function(i) local v=flattable[i] pelogen_tri_tclipdfif(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+--add(tests, {len=140, author="shiftalow(tclip)", fn=function(i) local v=flattable[i] pelogen_tri_tclip(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
+----add(tests, {len=148, author="shiftalow(tclipdfif)", fn=function(i) local v=flattable[i] pelogen_tri_tclipdfif(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
 --
 ----old
 --add(tests, {len=308, author="shiftalow(308)", fn=function(i) local v=ntable[i] pelogen_tri_308(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end},1)
@@ -664,6 +667,106 @@ add(tests, {len=140, author="shiftalow(tclip)", fn=function(i) local v=flattable
 
 yscale=1
 xscale=1
+
+--by @shiftalow
+-- 272 convert to integer with &0xffff
+function pelogen_tri_hvbaf(l,t,c,m,r,b,col)
+	color(col)
+	local a=rectfill
+	::_w_::
+ if(t>m)l,t,c,m=c,m,l,t
+ if(m>b)c,m,r,b=r,b,c,m
+ if(t>m)l,t,c,m=c,m,l,t
+
+	local q,p=l,c
+	if (q<c) q=c
+	if (q<r) q=r
+	if (p>l) p=l
+	if (p>r) p=r
+	if b-t>q-p then
+		l,t,c,m,r,b,col=t,l,m,c,b,r
+		goto _w_
+	end
+
+	local e,j,i=l,(r-l)/(b-t)
+	while m do
+		i=(c-l)/(m-t)
+		local f=(m&0xffff)-1
+		f=f>127 and 127 or f
+		if(t<0)t,l,e=0,l-i*t,b and e-j*t or e
+		if col then
+			for t=t&0xffff,f do
+				a(l,t,e,t)
+				l=i+l
+				e=j+e
+			end
+		else
+			for t=t&0xffff,f do
+				a(t,l,t,e)
+				l=i+l
+				e=j+e
+			end
+		end
+		l,t,m,c,b=c,m,b,r
+	end
+	if i<8 and i>-8 then
+		if col then
+			pset(r,t)
+		else
+			pset(t,r)
+		end
+	end
+end
+
+--by @shiftalow
+-- 273 convert to integer with &-1
+function pelogen_tri_hvbam(l,t,c,m,r,b,col)
+	color(col)
+	local a=rectfill
+	::_w_::
+ if(t>m)l,t,c,m=c,m,l,t
+ if(m>b)c,m,r,b=r,b,c,m
+ if(t>m)l,t,c,m=c,m,l,t
+
+	local q,p=l,c
+	if (q<c) q=c
+	if (q<r) q=r
+	if (p>l) p=l
+	if (p>r) p=r
+	if b-t>q-p then
+		l,t,c,m,r,b,col=t,l,m,c,b,r
+		goto _w_
+	end
+
+	local e,j,i=l,(r-l)/(b-t)
+	while m do
+		i=(c-l)/(m-t)
+		local f=(m&-1)-1
+		f=f>127 and 127 or f
+		if(t<0)t,l,e=0,l-i*t,b and e-j*t or e
+		if col then
+			for t=t&-1,f do
+				a(l,t,e,t)
+				l=i+l
+				e=j+e
+			end
+		else
+			for t=t&-1,f do
+				a(t,l,t,e)
+				l=i+l
+				e=j+e
+			end
+		end
+		l,t,m,c,b=c,m,b,r
+	end
+	if i<8 and i>-8 then
+		if col then
+			pset(r,t)
+		else
+			pset(t,r)
+		end
+	end
+end
 
 --by @shiftalow
 -- 272 proc branch goto beginning
@@ -860,6 +963,31 @@ function pelogen_tri_tclip(l,t,c,m,r,b,col)
 		l,t,m,c,b=c,m,b,r
 	end
 	pset(r,t)
+end
+
+--105
+function pelogen_tri_lowl(l,t,c,m,r,b,col)
+	color(col)
+	::_w_::
+	if(t>m)l,t,c,m=c,m,l,t
+	if m>b then
+		c,m,r,b=r,b,c,m
+		goto _w_
+	end
+--	local e,j=l,(r-l)/(b-t)
+	local e,j=l,(r-l)>>>(b-t)
+--	::_m_::
+	while m do
+		local i=(c-l)/(m-t)
+		for t=t\1,m\1-1 do
+			rectfill(l,t,e,t)
+			l+=i
+			e+=j
+		end
+		l,t,m,c,b=c,m,b,r
+--		l,t,m,c,b=c,m,b,r
+--	if(m) goto _m_
+	end
 end
 
 --113
@@ -1112,18 +1240,18 @@ function azufasttri(x1,y1,x2,y2,x3,y3,c)
 end
 
 -->8
-add(tests, {len=599, author="electricgryphon(v3)", fn=function(i) local v=flattable[i] solid_trifill_v3(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=278, author="electricgryphon", fn=function(i) local v=flattable[i] shade_trifill(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=455, author="musurca", fn=function(i) local v=ntable[i] musurca_triangle(v[1],v[2],v[3],v[4]) end})
-add(tests, {len=431, author="creamdog", fn=function(i) local v=flattable[i] creamdog_tri(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=335, author="p01(335)", fn=function(i) local v=flattable[i] p01_triangle_335(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=315, author="catafish", fn=function(i) gfx_draw(flattable[i]) end})
-add(tests, {len=295, author="nusan", fn=function(i) local v=flattable[i] steptri(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=163, author="p01(163)", fn=function(i) local v=flattable[i] p01_triangle_163(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=134, author="azure48(local fast)", fn=function(i) local v=flattable[i] azulocalfast(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=125, author="azure48(local low)", fn=function(i) local v=flattable[i] azulocallow(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=134, author="azure48(fast)", fn=function(i) local v=flattable[i] azufasttri(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
-add(tests, {len=122, author="azure48(low)", fn=function(i) local v=flattable[i] azulowtri(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=599, author="electricgryphon(v3)", fn=function(i) local v=flattable[i] solid_trifill_v3(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=278, author="electricgryphon", fn=function(i) local v=flattable[i] shade_trifill(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=455, author="musurca", fn=function(i) local v=ntable[i] musurca_triangle(v[1],v[2],v[3],v[4]) end})
+--add(tests, {len=431, author="creamdog", fn=function(i) local v=flattable[i] creamdog_tri(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=335, author="p01(335)", fn=function(i) local v=flattable[i] p01_triangle_335(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=315, author="catafish", fn=function(i) gfx_draw(flattable[i]) end})
+--add(tests, {len=295, author="nusan", fn=function(i) local v=flattable[i] steptri(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=163, author="p01(163)", fn=function(i) local v=flattable[i] p01_triangle_163(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=134, author="azure48(local fast)", fn=function(i) local v=flattable[i] azulocalfast(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=125, author="azure48(local low)", fn=function(i) local v=flattable[i] azulocallow(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=134, author="azure48(fast)", fn=function(i) local v=flattable[i] azufasttri(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
+--add(tests, {len=122, author="azure48(low)", fn=function(i) local v=flattable[i] azulowtri(v[1],v[2],v[3],v[4],v[5],v[6],v[7]) end})
 
 average_tris_per_sec = 3500
 cls()
